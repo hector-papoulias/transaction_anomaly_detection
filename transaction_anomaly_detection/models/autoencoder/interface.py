@@ -68,6 +68,25 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+    @classmethod
+    def _encode(
+        cls,
+        autoencoder: Autoencoder,
+        input_data: Union[pd.Series, pd.DataFrame],
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> torch.tensor:
+        t_input_data = cls._prepare_t_input(
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        t_latent_rep = cls._get_latent_rep_tensor(
+            autoencoder=autoencoder, t_input_data=t_input_data
+        )
+        return t_latent_rep
 
     @classmethod
     def _compute_reconstruction_loss_threshold(
