@@ -87,6 +87,32 @@ class Tokenizer:
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
 
+
+    @overload
+    def decode(self, encoded_token_or_ls_encoded_tokens: int) -> str:
+        ...
+
+    @overload
+    def decode(self, encoded_token_or_ls_encoded_tokens: List[int]) -> List[str]:
+        ...
+
+    def decode(self, encoded_token_or_ls_encoded_tokens):
+        if isinstance(encoded_token_or_ls_encoded_tokens, list):
+            return self._decode_ls_encoded_tokens(
+                ls_encoded_tokens=encoded_token_or_ls_encoded_tokens,
+                encoding_to_token=self._encoding_to_token,
+            )
+        if isinstance(encoded_token_or_ls_encoded_tokens, tuple):
+            return self._decode_ls_encoded_tokens(
+                ls_encoded_tokens=encoded_token_or_ls_encoded_tokens,
+                encoding_to_token=self._encoding_to_token,
+            )
+        if isinstance(encoded_token_or_ls_encoded_tokens, int):
+            return self._decode_encoded_token(
+                encoded_token=encoded_token_or_ls_encoded_tokens,
+                encoding_to_token=self._encoding_to_token,
+            )
+
     def ls_tokens_to_str(self, ls_tokens: List[str]) -> str:
         if self._unk_token is None and not self._tokens_in_vocabulary(
             set_tokens=set(ls_tokens), vocabulary=self._vocabulary
