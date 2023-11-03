@@ -69,6 +69,44 @@ class TransactionAnomalyDetector:
         return self._reconstruction_loss_threshold
 
     @classmethod
+    def _reconstruct(
+        cls,
+        autoencoder: Autoencoder,
+        input_data: Union[pd.Series, pd.DataFrame],
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> pd.DataFrame:
+        ls_input_features = cls._extract_feature_names(input_data=input_data)
+        t_input_data = cls._prepare_t_input(
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        (
+            tup_t_cat_reconstructions,
+            t_out_con_reconstructions,
+        ) = cls._get_reconstruction_tensors(
+            autoencoder=autoencoder,
+            t_input_data=t_input_data,
+            argmax_cat_logits=True,
+            denormalize_con_outputs=True,
+        )
+        dict_reconstructions = cls._format_dict_reconstructions(
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+            tup_t_cat_reconstructions=tup_t_cat_reconstructions,
+            t_out_con_reconstructions=t_out_con_reconstructions,
+        )
+        df_reconstructions = cls._format_df_reconstructions(
+            ls_cols_original=ls_input_features,
+            dict_reconstructions=dict_reconstructions,
+        )
+        return df_reconstructions
+
+    @classmethod
     def _encode(
         cls,
         autoencoder: Autoencoder,
@@ -394,6 +432,14 @@ class TransactionAnomalyDetector:
         ls_cat_features: List[str], ls_con_features: List[str]
     ) -> List[str]:
         return ls_cat_features + ls_con_features
+
+    @staticmethod
+    def _extract_feature_names(input_data: Union[pd.Series, pd.DataFrame]) -> List[str]:
+        if type(input_data) == pd.Series:
+            return input_data.index.tolist()
+        elif type(input_data) == pd.DataFrame:
+            return input_data.columns.tolist()
+
     @staticmethod
     def _get_dict_cat_feature_to_tokenizer(
         dict_cat_feature_to_ls_categories: Dict[str, List[str]]
