@@ -167,6 +167,8 @@ class Autoencoder(nn.Module):
         t_in: torch.tensor,
         argmax_cat_logits: Optional[bool] = False,
         denormalize_con_outputs: Optional[bool] = False,
+        compute_loss: Optional[bool] = False,
+        loss_batch_reduction: Optional[str] = None,
     ) -> Tuple[
         torch.tensor,
         Tuple[torch.tensor],
@@ -251,6 +253,23 @@ class Autoencoder(nn.Module):
             t_out_con_reconstructions=t_out_con_reconstructions,
         )
         # t_out_con shape: (B, n_con_features)
+
+        # Reconstruction Loss Computation
+        t_loss, t_cat_losses, t_con_losses = None, None, None
+        if compute_loss:
+            t_loss, t_cat_losses, t_con_losses = self._compute_reconstruction_loss(
+                loss_module=self._loss,
+                tup_t_cat_logits=tup_t_cat_logits,
+                tup_t_cat_targets=tup_t_cat_targets,
+                t_out_con_zscores=t_out_con_zscores,
+                t_con_zscore_targets=t_con_zscore_targets,
+                loss_batch_reduction=loss_batch_reduction,
+            )
+            # t_cat_losses shape: (B, n_cat_features) if no batch_reduction is applied, (n_cat_features) otherwise.
+            # t_con_losses shape: (B, n_con_features) if no batch_reduction is applied, (n_con_features) otherwise.
+            # t_loss shape: (B) if no batch_reduction is applied, () otherwise.
+        return t_encoded, tup_t_out_cat, t_out_con, t_loss, t_cat_losses, t_con_losses
+
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
@@ -513,6 +532,31 @@ class Autoencoder(nn.Module):
             else t_out_con_zscores
         )
         return t_out_con
+
+    @staticmethod
+    def _compute_reconstruction_loss(
+        loss_module: ReconstructionLoss,
+        tup_t_cat_logits: Optional[Tuple[torch.tensor]] = None,
+        tup_t_cat_targets: Optional[Tuple[torch.tensor]] = None,
+        t_out_con_zscores: Optional[torch.tensor] = None,
+        t_con_zscore_targets: Optional[torch.tensor] = None,
+        loss_batch_reduction: Optional[str] = None,
+    ) -> Tuple[torch.tensor, Optional[torch.tensor], Optional[torch.tensor]]:
+        t_cat_losses, t_con_losses = loss_module(
+            ls_cat_logits=tup_t_cat_logits,
+            ls_cat_targets=tup_t_cat_targets,
+            t_con_predictions=t_out_con_zscores,
+            t_con_targets=t_con_zscore_targets,
+            batch_reduction=loss_batch_reduction,
+        )
+        t_loss = torch.mean(
+            torch.cat(
+                [t for t in [t_cat_losses, t_con_losses] if t is not None], axis=-1
+            ),  # Shape (B, n_cat_features + n_con_features) if no reduction is applied, (n_cat_features + n_con_features) otherwise.
+            axis=-1,
+        )
+        return t_loss, t_cat_losses, t_con_losses
+
     @staticmethod
     def _get_sr_low(
         sr_min: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
