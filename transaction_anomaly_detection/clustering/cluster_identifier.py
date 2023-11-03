@@ -4,7 +4,48 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from sklearn.neighbors import BallTree
+
+
 class ClusterIdentifier:
+    _ls_df_cluster_stats_cols = [
+        "dist_mean",
+        "dist_std",
+        "n_spoofed",
+        "n_nonspoofed",
+        "class_balance" "cluster_idx",
+    ]
+
+    def __init__(self):
+        self._ls_clusters: List[int] = []
+        self._df_cluster_stats: pd.DataFrame = pd.DataFrame(
+            columns=self._ls_df_cluster_stats_cols
+        )
+
+    @property
+    def df_cluster_stats(self) -> pd.DataFrame:
+        return self._df_cluster_stats
+
+    def get_cluster(self, cluster_idx: int) -> gpd.GeoDataFrame:
+        try:
+            return self._ls_clusters[cluster_idx]
+        except:
+            ValueError("Invalid cluster index: check df_cluster_stats attribute.")
+
+    def fit(
+        self,
+        gdf_transactions: gpd.GeoDataFrame,
+        n_nbrs: int,
+        crs: str,
+        gdf_centers: Optional[gpd.GeoDataFrame] = None,
+    ):
+        df_cluster_stats, ls_clusters = self._identify_clusters(
+            gdf_transactions=gdf_transactions,
+            n_nbrs=n_nbrs,
+            crs=crs,
+            gdf_centers=gdf_centers,
+        )
+        self._df_cluster_stats = df_cluster_stats
+        self._ls_clusters = ls_clusters
 
     @classmethod
     def _identify_clusters(
