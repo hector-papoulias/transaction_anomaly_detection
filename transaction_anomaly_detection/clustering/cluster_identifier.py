@@ -50,10 +50,10 @@ class ClusterIdentifier:
     @classmethod
     def _identify_clusters(
         cls,
-        gdf_transactions=gdf_transactions,
-        n_nbrs=n_nbrs,
-        crs=crs,
-        gdf_centers=gdf_centers,
+        gdf_transactions: gpd.GeoDataFrame,
+        n_nbrs: int,
+        crs: str,
+        gdf_centers: gpd.GeoDataFrame,
     ) -> Tuple[pd.DataFrame, List[gpd.GeoDataFrame]]:
         distances, indices = cls._get_cluster_distances_indices(
             gdf_transactions=gdf_transactions,
@@ -61,7 +61,7 @@ class ClusterIdentifier:
             crs=crs,
             gdf_centers=gdf_centers,
         )
-        df_cluster_stats, ls_clusters = cls.__format_cluster_output(
+        df_cluster_stats, ls_clusters = cls._format_cluster_output(
             gdf_transactions=gdf_transactions,
             cluster_distances=distances,
             cluster_indices=indices,
