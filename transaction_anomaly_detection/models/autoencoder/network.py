@@ -173,6 +173,61 @@ class Autoencoder(nn.Module):
             ]
         )
         return mlp
+
+    @staticmethod
+    def _get_cat_postprocessor(
+        dim_autoencoder_output: int, n_categories_total: int, dropout_rate: float
+    ) -> nn.ModuleDict:
+        cat_postprocessor = nn.ModuleDict()
+        cat_postprocessor["t_decoded_to_logits"] = nn.Sequential(
+            nn.Dropout(dropout_rate),
+            nn.Linear(
+                in_features=dim_autoencoder_output,
+                out_features=n_categories_total,
+                bias=True,
+            ),
+        )
+        return cat_postprocessor
+
+    @classmethod
+    def _get_con_postprocessor(
+        cls,
+        dim_autoencoder_output: int,
+        n_continuous_features: int,
+        sr_min: pd.Series,
+        sr_max: pd.Series,
+        sr_mean: pd.Series,
+        sr_std: pd.Series,
+    ) -> nn.ModuleDict:
+        con_postprocessor = nn.ModuleDict()
+        sr_low = cls._get_sr_low(sr_min=sr_min, sr_mean=sr_mean, sr_std=sr_std)
+        sr_high = cls._get_sr_high(sr_max=sr_max, sr_mean=sr_mean, sr_std=sr_std)
+        con_postprocessor["t_decoded_to_zscores"] = nn.Sequential(
+            LinBnDrop(
+                dim_in=dim_autoencoder_output,
+                dim_out=n_continuous_features,
+                activation=None,
+                bn=False,
+                dropout_rate=0,
+            ),
+            ShiftedSigmoid(
+                t_min_values=torch.tensor(list(sr_low.values), requires_grad=False),
+                t_max_values=torch.tensor(list(sr_high.values), requires_grad=False),
+            ),
+        )
+        return con_postprocessor
+
+    @staticmethod
+    def _get_sr_low(
+        sr_min: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
+    ) -> pd.Series:
+        return (sr_min - sr_mean) / sr_std
+
+    @staticmethod
+    def _get_sr_high(
+        sr_max: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
+    ) -> pd.Series:
+        return (sr_max - sr_mean) / sr_std
     @classmethod
     def _get_default_df_con_stats(cls, ls_con_features: List[str]) -> pd.DataFrame:
         dict_con_feature_to_mean_std_min_max = {}
