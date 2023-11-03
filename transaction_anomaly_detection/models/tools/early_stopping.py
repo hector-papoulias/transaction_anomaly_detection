@@ -49,6 +49,33 @@ class EarlyStopper:
     def best_model(self) -> nn.Module:
         return self._best_model
 
+    def update(self, metric: float, model: nn.Module):
+        self._ls_historic_metrics = self._get_ls_historic_metrics_updated(
+            latest_metric=metric,
+            patience=self._patience,
+            ls_historic_metrics_current=self._ls_historic_metrics,
+        )
+        (
+            self._best_epoch,
+            self._best_metric,
+            self._best_model,
+        ) = self._get_best_epoch_metric_model(
+            current_best_epoch=self._best_epoch,
+            latest_epoch=self._n_epochs_ellapsed,
+            current_best_metric=self._best_metric,
+            latest_metric=metric,
+            current_best_model=self._best_model,
+            latest_model=model,
+        )
+        self._n_epochs_ellapsed += 1
+        if not self._stop:
+            self._stop = self._stopping_condition_met(
+                patience=self._patience,
+                delta_threshold=self._delta_threshold,
+                max_n_epochs=self._max_n_epochs,
+                n_epochs_ellapsed=self._n_epochs_ellapsed,
+                ls_historic_metrics=self._ls_historic_metrics,
+            )
 
     def __repr__(self):
         return f"EarlyStopper(patience = {self._patience}, delta_threshold = {self._delta_threshold}, max_n_epochs = {self._max_n_epochs})"
