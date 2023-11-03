@@ -69,6 +69,22 @@ class TransactionAnomalyDetector:
         return self._reconstruction_loss_threshold
 
     @staticmethod
+    def _format_df_anomalies(
+        input_data: pd.DataFrame, idx_anomalies: List[int], sr_loss_by_record
+    ) -> pd.DataFrame:
+        df_anomalies = input_data.iloc[idx_anomalies].copy()
+        if not df_anomalies.empty:
+            df_anomalies["loss"] = sr_loss_by_record
+            df_anomalies.sort_values(by="loss", ascending=False, inplace=True)
+            df_anomalies.reset_index(inplace=True)
+            df_anomalies.rename(columns={"index": "index"}, inplace=True)
+            df_anomalies.rename_axis(index="loss_rank", inplace=True)
+            df_anomalies = df_anomalies.loc[
+                :, ["loss"] + [col for col in df_anomalies.columns if col != "loss"]
+            ]
+        return df_anomalies
+
+    @staticmethod
     def _get_idx_anomalies(
         sr_loss_by_record: pd.Series, reconstruction_loss_threshold: float
     ) -> List[int]:
