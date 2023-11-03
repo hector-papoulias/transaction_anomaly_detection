@@ -68,6 +68,13 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+    @staticmethod
+    def _get_idx_anomalies(
+        sr_loss_by_record: pd.Series, reconstruction_loss_threshold: float
+    ) -> List[int]:
+        return list(
+            sr_loss_by_record[sr_loss_by_record > reconstruction_loss_threshold].index
+        )
 
     @staticmethod
     def _format_df_reconstructions(
