@@ -133,6 +133,34 @@ class Autoencoder(nn.Module):
     @property
     def df_con_stats(self) -> Optional[pd.DataFrame]:
         return self._df_con_stats
+
+    def fit_continuous_feature_statistics(
+        self,
+        df_dataset: pd.DataFrame,
+    ):
+        if self._has_con:
+            self._df_con_stats = self._get_fitted_df_con_stats(
+                df_dataset=df_dataset, ls_con_features=self._ls_con_features
+            )
+            self._con_preprocessor["normalizer"].means = torch.tensor(
+                list(self._df_con_stats["mean"].values)
+            )
+            self._con_preprocessor["normalizer"].stds = torch.tensor(
+                list(self._df_con_stats["std"].values)
+            )
+            sr_low = self._get_sr_low(
+                sr_min=self._df_con_stats["min"],
+                sr_mean=self._df_con_stats["mean"],
+                sr_std=self._df_con_stats["std"],
+            )
+            sr_high = self._get_sr_high(
+                sr_max=self._df_con_stats["max"],
+                sr_mean=self._df_con_stats["mean"],
+                sr_std=self._df_con_stats["std"],
+            )
+            shifted_sigmoid = self._con_postprocessor["t_decoded_to_zscores"][-1]
+            shifted_sigmoid.min_vals = torch.tensor(list(sr_low.values))
+            shifted_sigmoid.max_vals = torch.tensor(list(sr_high.values))
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
@@ -298,6 +326,23 @@ class Autoencoder(nn.Module):
         sr_max: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
     ) -> pd.Series:
         return (sr_max - sr_mean) / sr_std
+
+    @classmethod
+    def _get_fitted_df_con_stats(
+        cls,
+        df_dataset: pd.DataFrame,
+        ls_con_features: List[str],
+    ) -> pd.DataFrame:
+        dict_con_feature_to_mean_std_min_max = {}
+        for con_feature in ls_con_features:
+            dict_con_feature_to_mean_std_min_max[
+                con_feature
+            ] = cls._get_mean_std_min_max(arr_vals=df_dataset[con_feature])
+        df_con_stats = cls._dict_con_stats_to_df_con_stats(
+            dict_con_feature_to_mean_std_min_max=dict_con_feature_to_mean_std_min_max
+        )
+        return df_con_stats
+
     @classmethod
     def _get_default_df_con_stats(cls, ls_con_features: List[str]) -> pd.DataFrame:
         dict_con_feature_to_mean_std_min_max = {}
@@ -320,3 +365,13 @@ class Autoencoder(nn.Module):
             columns=["mean", "std", "min", "max"],
         )
         return df_con_stats
+
+    @staticmethod
+    def _get_mean_std_min_max(arr_vals: np.array) -> Tuple[float, float, float, float]:
+        mean = np.nanmean(arr_vals)
+        std = np.nanstd(arr_vals)
+        if std == 0:
+            std = 1
+        minimum = np.nanmin(arr_vals)
+        maximum = np.nanmax(arr_vals)
+        return mean, std, minimum, maximum
