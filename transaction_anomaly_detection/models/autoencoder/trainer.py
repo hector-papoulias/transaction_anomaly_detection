@@ -114,8 +114,8 @@ class AutoencoderTrainer:
         optimizer.step()
         return t_loss.item()
 
-    @torch.no_grad()
     @staticmethod
+    @torch.no_grad()
     def _compute_val_loss(
         autoencoder: Autoencoder, t_dataset_val: torch.tensor
     ) -> float:
@@ -148,8 +148,8 @@ class AutoencoderTrainer:
     def _get_train_recap(best_epoch: int, min_val_loss: float) -> str:
         return f"Min Val Loss @Epoch {best_epoch}: {min_val_loss} "
 
-    @torch.no_grad()
     @staticmethod
+    @torch.no_grad()
     def _get_batch_generator(
         t_dataset: torch.tensor,  # t_dataset shape: (n_records, n_cat_feautres + n_con_eatures)
         n_batches: int,
@@ -162,14 +162,14 @@ class AutoencoderTrainer:
             t_batch = t_dataset[start_idx:end_idx, :]
             yield t_batch  # t_batch shape: (B, n_cat_feautres + n_con_eatures)
 
-    @torch.no_grad()
     @staticmethod
+    @torch.no_grad()
     def _shuffle_dataset(t_dataset: torch.tensor) -> torch.tensor:
         shuffled_indices = torch.randperm(t_dataset.size(0))
         return t_dataset[shuffled_indices]
 
-    @torch.no_grad()
     @staticmethod
+    @torch.no_grad()
     def _split_dataset(
         t_dataset: torch.tensor,
         val_ratio: float,
