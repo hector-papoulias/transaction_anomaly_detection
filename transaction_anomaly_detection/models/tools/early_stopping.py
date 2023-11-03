@@ -49,6 +49,10 @@ class EarlyStopper:
     def best_model(self) -> nn.Module:
         return self._best_model
 
+
+    def __repr__(self):
+        return f"EarlyStopper(patience = {self._patience}, delta_threshold = {self._delta_threshold}, max_n_epochs = {self._max_n_epochs})"
+
     @staticmethod
     def _get_best_epoch_metric_model(
         current_best_epoch: int,
