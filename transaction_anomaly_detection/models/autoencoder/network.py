@@ -106,6 +106,33 @@ class Autoencoder(nn.Module):
                 dropout_rate=self._dropout_rate_cat_decoder,
             )
 
+    @property
+    def has_cat(self) -> bool:
+        return self._has_cat
+
+    @property
+    def ls_cat_features(self) -> List[str]:
+        return self._ls_cat_features
+
+    @property
+    def dict_cat_feature_to_ls_categories(self) -> Dict[str, List[str]]:
+        return self._dict_cat_feature_to_ls_categories
+
+    @property
+    def dict_cat_feature_to_n_embd(self) -> Dict[str, int]:
+        return self._dict_cat_feature_to_n_embd
+
+    @property
+    def has_con(self) -> bool:
+        return self._has_con
+
+    @property
+    def ls_con_features(self) -> List[str]:
+        return self._ls_con_features
+
+    @property
+    def df_con_stats(self) -> Optional[pd.DataFrame]:
+        return self._df_con_stats
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
