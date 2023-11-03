@@ -70,6 +70,18 @@ class TransactionAnomalyDetector:
 
     @staticmethod
     @torch.no_grad()
+    def _get_latent_rep_tensor(
+        autoencoder: Autoencoder,
+        t_input_data: torch.tensor,  # Shape: (B, n_cat_features + n_con_features)
+    ) -> torch.tensor:
+        t_latent_rep, _, _, _, _, _ = autoencoder(
+            t_in=t_input_data,
+            compute_loss=False,
+        )
+        return t_latent_rep
+
+    @staticmethod
+    @torch.no_grad()
     def _get_loss_tensors(
         autoencoder: Autoencoder,
         t_input_data: torch.tensor,  # Shape: (B, n_cat_features + n_con_features)
