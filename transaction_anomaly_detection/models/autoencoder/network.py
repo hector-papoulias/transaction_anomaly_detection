@@ -199,6 +199,15 @@ class Autoencoder(nn.Module):
             )
             # t_in_con_zscores shape: (B, n_continuous_features),
             # t_con_targets_shape (B, n_continuous_features)
+
+        # Standard Autoencoder Forward Pass
+        t_encoded, t_decoded = self._pass_through_standard_autoencoder(
+            t_cat_embd=t_cat_embd,
+            t_in_con_zscores=t_in_con_zscores,
+            standard_autoencoder=self._standard_autoencoder,
+        )
+        # t_encoded shape: (B, encoder_layer_szs[-1])
+        # t_decoded shape: (B, dim_ae_external) = (B, n_con_features+sum(n_embd_cat))
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
@@ -388,6 +397,19 @@ class Autoencoder(nn.Module):
         t_con_zscore_targets = t_in_con_zscores
         t_in_con_zscores = con_preprocessor["batch_norm"](t_in_con)
         return t_in_con_zscores, t_con_zscore_targets
+
+    @staticmethod
+    def _pass_through_standard_autoencoder(
+        t_cat_embd: torch.tensor,
+        t_in_con_zscores: torch.tensor,
+        standard_autoencoder: nn.ModuleDict,
+    ) -> torch.tensor:
+        ae_input = torch.cat(
+            tensors=[t for t in [t_cat_embd, t_in_con_zscores] if t is not None], dim=-1
+        )
+        t_encoded = standard_autoencoder["encoder"](ae_input)
+        t_decoded = standard_autoencoder["decoder"](t_encoded)
+        return t_encoded, t_decoded
     @staticmethod
     def _get_sr_low(
         sr_min: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
