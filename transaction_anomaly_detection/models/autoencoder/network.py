@@ -21,6 +21,7 @@ class Autoencoder(nn.Module):
         self,
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]],
         ls_con_features: List[int],
+        ae_activation: nn.Module,
     ):
         super().__init__()
         # Extract and Save Categorical Feature Specs
@@ -57,6 +58,8 @@ class Autoencoder(nn.Module):
             self._df_con_stats = None
         # Compute Standard Autoencoder External Dimension
         dim_ae_external = self._n_continuous_features + n_embed_total
+        # Save Loss
+        self._loss = ReconstructionLoss()
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
