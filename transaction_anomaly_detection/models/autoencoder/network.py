@@ -161,6 +161,23 @@ class Autoencoder(nn.Module):
             shifted_sigmoid = self._con_postprocessor["t_decoded_to_zscores"][-1]
             shifted_sigmoid.min_vals = torch.tensor(list(sr_low.values))
             shifted_sigmoid.max_vals = torch.tensor(list(sr_high.values))
+
+    def forward(
+        self,
+        t_in: torch.tensor,
+    ) -> Tuple[
+        torch.tensor,
+        Tuple[torch.tensor],
+        torch.tensor,
+        torch.tensor,
+        torch.tensor,
+        torch.tensor,
+    ]:
+        # BatchSwapNoise Augmentation
+        t_in = self._batchswap_noise(t_in)
+        # t_in shape: (B, n_categorical_features + n_continuous_features)
+        # BatchSwapNoise doesn't change the shape.
+
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
