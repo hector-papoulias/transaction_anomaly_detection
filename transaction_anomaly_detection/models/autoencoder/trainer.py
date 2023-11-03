@@ -9,6 +9,15 @@ from transaction_anomaly_detection.models.tools.early_stopping import EarlyStopp
 class AutoencoderTrainer:
     @torch.no_grad()
     @staticmethod
+    def _compute_val_loss(
+        autoencoder: Autoencoder, t_dataset_val: torch.tensor
+    ) -> float:
+        _, _, _, t_val_loss, _, _ = autoencoder.forward(
+            t_in=t_dataset_val, compute_loss=True, loss_batch_reduction="mean"
+        )
+        return t_val_loss.item()
+    @torch.no_grad()
+    @staticmethod
     def _get_batch_generator(
         t_dataset: torch.tensor,  # t_dataset shape: (n_records, n_cat_feautres + n_con_eatures)
         n_batches: int,
