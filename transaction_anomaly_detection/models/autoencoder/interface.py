@@ -68,6 +68,69 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+
+    @staticmethod
+    def _format_df_reconstructions(
+        ls_cols_original: List[str],
+        dict_reconstructions: Dict[str, Union[List[str], List[float]]],
+    ) -> pd.DataFrame:
+        df_reconstructions = pd.DataFrame(dict_reconstructions)
+        df_reconstructions = df_reconstructions.loc[
+            :,
+            [
+                feature
+                for feature in ls_cols_original
+                if feature in dict_reconstructions.keys()
+            ],
+        ]
+        df_reconstructions.rename(
+            columns={
+                column: column + "_recon" for column in df_reconstructions.columns
+            },
+            inplace=True,
+        )
+        return df_reconstructions
+
+    @classmethod
+    def _format_dict_reconstructions(
+        cls,
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+        tup_t_cat_reconstructions: Tuple[torch.tensor],
+        t_out_con_reconstructions: torch.tensor,
+    ) -> Dict[str, Union[List[str], List[float]]]:
+        dict_reconstructions = {}
+        for i, cat_feature in enumerate(ls_cat_features):
+            dict_reconstructions[
+                cat_feature
+            ] = cls._get_cat_feature_reconstruction_from_tensor(
+                t_cat_reconstruction=tup_t_cat_reconstructions[i],
+                tokenizer=dict_cat_feature_to_tokenizer[cat_feature],
+            )
+        for i, con_feature in enumerate(ls_con_features):
+            dict_reconstructions[
+                con_feature
+            ] = cls._get_con_feature_reconstruction_from_tensor(
+                t_con_reconstruction=t_out_con_reconstructions[:, i]
+            )
+        return dict_reconstructions
+
+    @staticmethod
+    def _get_cat_feature_reconstruction_from_tensor(
+        t_cat_reconstruction: torch.tensor, tokenizer: Tokenizer
+    ) -> List[str]:
+        ls_cat_reconstruction = t_cat_reconstruction.tolist()
+        ls_cat_reconstruction = tokenizer.decode(ls_cat_reconstruction)
+        return ls_cat_reconstruction
+
+    @staticmethod
+    def _get_con_feature_reconstruction_from_tensor(
+        t_con_reconstruction: torch.tensor,
+    ) -> List[float]:
+        ls_con_reconstruction = t_con_reconstruction.tolist()
+        return ls_con_reconstruction
+
     @staticmethod
     def _format_sr_loss_by_record(
         index: List[Any],
