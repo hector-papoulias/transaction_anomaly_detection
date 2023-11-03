@@ -68,6 +68,84 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+    @classmethod
+    def _compute_mean_reconstruction_loss(
+        cls,
+        autoencoder: Autoencoder,
+        input_data: pd.DataFrame,
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> float:
+        t_input_data = cls._prepare_t_input(
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        t_reconstruction_loss, _, _ = cls._get_loss_tensors(
+            autoencoder=autoencoder,
+            t_input_data=t_input_data,
+            loss_batch_reduction="mean",
+        )
+        # t_reconstruction_loss shape: ()
+        return t_reconstruction_loss.item()
+
+    @classmethod
+    def _compute_reconstruction_loss_by_record(
+        cls,
+        autoencoder: Autoencoder,
+        input_data: pd.DataFrame,
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> pd.Series:
+        t_input_data = cls._prepare_t_input(
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        t_reconstruction_loss, _, _ = cls._get_loss_tensors(
+            autoencoder=autoencoder,
+            t_input_data=t_input_data,
+            loss_batch_reduction="none",
+        )
+        # t_reconstruction_loss shape: (B)
+        sr_loss_by_record = cls._format_sr_loss_by_record(
+            index=list(input_data.index), t_reconstruction_loss=t_reconstruction_loss
+        )
+        return sr_loss_by_record
+
+    @classmethod
+    def _compute_reconstruction_loss_by_feature(
+        cls,
+        autoencoder: Autoencoder,
+        input_data: Union[pd.Series, pd.DataFrame],
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> pd.Series:
+        t_input_data = cls._prepare_t_input(
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        _, t_cat_losses, t_con_losses = cls._get_loss_tensors(
+            autoencoder=autoencoder,
+            t_input_data=t_input_data,
+            loss_batch_reduction="mean",
+        )
+        dict_loss_by_feature = cls._get_dict_loss_by_feature(
+            ls_features=ls_cat_features + ls_con_features,
+            t_losses=torch.cat([t_cat_losses, t_con_losses]),
+        )
+        sr_loss_by_feature = cls._format_sr_loss_by_feature(
+            dict_loss_by_feature=dict_loss_by_feature
+        )
+        return sr_loss_by_feature
+
     @staticmethod
     def _format_df_anomalies(
         input_data: pd.DataFrame, idx_anomalies: List[int], sr_loss_by_record
