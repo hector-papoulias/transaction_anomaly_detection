@@ -9,6 +9,12 @@ from transaction_anomaly_detection.models.tools.early_stopping import EarlyStopp
 class AutoencoderTrainer:
     @torch.no_grad()
     @staticmethod
+    def _shuffle_dataset(t_dataset: torch.tensor) -> torch.tensor:
+        shuffled_indices = torch.randperm(t_dataset.size(0))
+        return t_dataset[shuffled_indices]
+
+    @torch.no_grad()
+    @staticmethod
     def _split_dataset(
         t_dataset: torch.tensor,
         val_ratio: float,
