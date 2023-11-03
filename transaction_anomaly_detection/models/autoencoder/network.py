@@ -17,11 +17,15 @@ from transaction_anomaly_detection.models.layers.shifted_sigmoid import ShiftedS
 
 
 class Autoencoder(nn.Module):
+    _dropout_rate_cat_decoder: float = 0.1
+
     def __init__(
         self,
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]],
         ls_con_features: List[int],
         ae_activation: nn.Module,
+        encoder_layer_szs: List[int],
+        dropout_rate: float,
         batchswap_noise_rate: float,
     ):
         super().__init__()
@@ -63,6 +67,45 @@ class Autoencoder(nn.Module):
         self._loss = ReconstructionLoss()
         # Save Batch Swap Noise Preprocessor
         self._batchswap_noise = BatchSwapNoise(swap_rate=batchswap_noise_rate)
+        # Save Categorical Feature Preprocessor
+        if self._has_cat:
+            self._cat_preprocessor = self._get_cat_preprocessor(
+                dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd,
+                dropout_rate=dropout_rate,
+            )
+        # Save Continuous Feature Preprocessor
+        if self._has_con:
+            self._con_preprocessor = self._get_con_preprocessor(
+                n_continuous_features=self._n_continuous_features,
+                sr_feature_means=self._df_con_stats["mean"],
+                sr_feature_stds=self._df_con_stats["std"],
+            )
+        # Save Standard AutoEncoder
+        self._standard_autoencoder = self._get_standard_autoencoder(
+            dim_external=dim_ae_external,
+            encoder_layer_szs=encoder_layer_szs,
+            activation=ae_activation,
+            bn=True,
+            dropout_rate=dropout_rate,
+        )
+        # Save Continuous Feature Postprocessor
+        if self._has_con:
+            self._con_postprocessor = self._get_con_postprocessor(
+                dim_autoencoder_output=dim_ae_external,
+                n_continuous_features=self._n_continuous_features,
+                sr_min=self._df_con_stats["min"],
+                sr_max=self._df_con_stats["max"],
+                sr_mean=self._df_con_stats["mean"],
+                sr_std=self._df_con_stats["std"],
+            )
+        # Save Categorical Feature Postprocessor
+        if self._has_cat:
+            self._cat_postprocessor = self._get_cat_postprocessor(
+                dim_autoencoder_output=dim_ae_external,
+                n_categories_total=n_categories_total,
+                dropout_rate=self._dropout_rate_cat_decoder,
+            )
+
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
