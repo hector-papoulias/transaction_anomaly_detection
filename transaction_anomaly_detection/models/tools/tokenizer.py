@@ -87,6 +87,22 @@ class Tokenizer:
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
 
+    @classmethod
+    def _replace_unknown_tokens(
+        cls, ls_tokens: List[str], vocabulary: Set[str], unk_token: str
+    ) -> List[str]:
+        for i, token in enumerate(ls_tokens):
+            if not cls._token_in_vocabulary(token=token, vocabulary=vocabulary):
+                ls_tokens[i] = unk_token
+        return ls_tokens
+
+    @staticmethod
+    def _token_in_vocabulary(token: str, vocabulary: Set[str]) -> bool:
+        return token in vocabulary
+
+    @staticmethod
+    def _tokens_in_vocabulary(set_tokens: Set[str], vocabulary: Set[str]) -> bool:
+        return set_tokens.issubset(vocabulary)
 
     @classmethod
     def _pad(
