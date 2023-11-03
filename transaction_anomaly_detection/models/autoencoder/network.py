@@ -17,6 +17,46 @@ from transaction_anomaly_detection.models.layers.shifted_sigmoid import ShiftedS
 
 
 class Autoencoder(nn.Module):
+    def __init__(
+        self,
+        dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]],
+        ls_con_features: List[int],
+    ):
+        super().__init__()
+        # Extract and Save Categorical Feature Specs
+        self._dict_cat_feature_to_ls_categories: Dict[
+            str, List[str]
+        ] = self._get_dict_cat_feature_to_ls_categories(
+            dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd
+        )
+        self._dict_cat_feature_to_n_embd: Dict[
+            str, int
+        ] = self._get_dict_cat_feature_to_n_embd(
+            dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd
+        )
+        self._ls_cat_features: List[str] = self._get_ls_cat_features(
+            dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd
+        )
+        self._ls_n_categories: List[int] = self._get_ls_n_categories(
+            dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd
+        )
+        self._n_categorical_features: int = len(self._ls_cat_features)
+        n_categories_total = sum(self._ls_n_categories)
+        ls_n_embd = list(self._dict_cat_feature_to_n_embd.values())
+        n_embed_total = sum(ls_n_embd)
+        self._has_cat: bool = True if self._n_categorical_features > 0 else False
+        # Extract and Save Continuous Feature Specs
+        self._ls_con_features = ls_con_features
+        self._n_continuous_features = len(self._ls_con_features)
+        self._has_con = True if self._n_continuous_features > 0 else False
+        if self._has_con:
+            self._df_con_stats = self._get_default_df_con_stats(
+                ls_con_features=self._ls_con_features
+            )
+        else:
+            self._df_con_stats = None
+        # Compute Standard Autoencoder External Dimension
+        dim_ae_external = self._n_continuous_features + n_embed_total
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
