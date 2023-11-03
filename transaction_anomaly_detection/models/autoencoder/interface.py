@@ -67,6 +67,61 @@ class TransactionAnomalyDetector:
     @property
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
+    @classmethod
+    def _prepare_t_input(
+        cls,
+        input_data: Union[pd.Series, pd.DataFrame],
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> torch.tensor:
+        if type(input_data) == pd.Series:
+            df_prepared_data = cls._sr_to_df(
+                sr=input_data,
+                ls_cat_features=ls_cat_features,
+                ls_con_features=ls_con_features,
+            )
+        else:
+            df_prepared_data = input_data.copy()
+        for cat_feature, tokenizer in dict_cat_feature_to_tokenizer.items():
+            df_prepared_data[cat_feature] = tokenizer.encode(
+                list(df_prepared_data[cat_feature].values)
+            )
+        ls_ordered_feature_names = cls._get_ordered_feature_names(
+            ls_cat_features=ls_cat_features, ls_con_features=ls_con_features
+        )
+        df_prepared_data = df_prepared_data.loc[:, ls_ordered_feature_names]
+        t_input = torch.tensor(df_prepared_data.values)
+        return t_input
+
+    @classmethod
+    def _sr_to_df(
+        cls, sr: pd.Series, ls_cat_features: List[str], ls_con_features: List[str]
+    ) -> pd.DataFrame:
+        schema = cls._get_schema(
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+        )
+        df = pd.DataFrame(sr).T
+        df = df.astype(dtype=schema)
+        return df
+
+    @staticmethod
+    def _get_schema(
+        ls_cat_features: List[str], ls_con_features: List[str]
+    ) -> Dict[str, type]:
+        schema = {}
+        for cat_feature in ls_cat_features:
+            schema[cat_feature] = object
+        for con_feature in ls_con_features:
+            schema[con_feature] = np.float64
+        return schema
+
+    @staticmethod
+    def _get_ordered_feature_names(
+        ls_cat_features: List[str], ls_con_features: List[str]
+    ) -> List[str]:
+        return ls_cat_features + ls_con_features
     @staticmethod
     def _get_dict_cat_feature_to_tokenizer(
         dict_cat_feature_to_ls_categories: Dict[str, List[str]]
