@@ -49,3 +49,25 @@ class Autoencoder(nn.Module):
             len(ls_categories_n_embd[0])
             for ls_categories_n_embd in dict_cat_feature_to_ls_categories_n_embd.values()
         ]
+    @classmethod
+    def _get_default_df_con_stats(cls, ls_con_features: List[str]) -> pd.DataFrame:
+        dict_con_feature_to_mean_std_min_max = {}
+        for con_feature in ls_con_features:
+            dict_con_feature_to_mean_std_min_max[con_feature] = (0, 1, -1, 1)
+        df_con_stats = cls._dict_con_stats_to_df_con_stats(
+            dict_con_feature_to_mean_std_min_max=dict_con_feature_to_mean_std_min_max
+        )
+        return df_con_stats
+
+    @staticmethod
+    def _dict_con_stats_to_df_con_stats(
+        dict_con_feature_to_mean_std_min_max: Dict[
+            str, Tuple[float, float, float, float]
+        ]
+    ) -> pd.DataFrame:
+        df_con_stats = pd.DataFrame.from_dict(
+            data=dict_con_feature_to_mean_std_min_max,
+            orient="index",
+            columns=["mean", "std", "min", "max"],
+        )
+        return df_con_stats
