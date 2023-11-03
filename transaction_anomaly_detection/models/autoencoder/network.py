@@ -178,6 +178,27 @@ class Autoencoder(nn.Module):
         # t_in shape: (B, n_categorical_features + n_continuous_features)
         # BatchSwapNoise doesn't change the shape.
 
+        # Preprocessing
+        t_cat_embd, tup_t_cat_targets = None, None
+        if self._has_cat:
+            t_in_cat = self._get_t_in_cat(
+                t_in=t_in, n_categorical_features=self._n_categorical_features
+            )  # t_in_cat shape: (B, n_categorical_features)
+            t_cat_embd, tup_t_cat_targets = self._preprocess_cat_features(
+                t_in_cat=t_in_cat, cat_preprocessor=self._cat_preprocessor
+            )
+            # t_cat_embd shape: (B, sum(n_embd)),
+            # tup_t_cat_targets contains n_categorical_features tensors, each of shape: (B)
+        t_in_con_zscores, t_con_zscore_targets = None, None
+        if self._has_con:
+            t_in_con = self._get_t_in_con(
+                t_in=t_in, n_continuous_features=self._n_continuous_features
+            )  # t_in_con shape: (B, n_continuous_features)
+            t_in_con_zscores, t_con_zscore_targets = self._preprocess_con_features(
+                t_in_con=t_in_con, con_preprocessor=self._con_preprocessor
+            )
+            # t_in_con_zscores shape: (B, n_continuous_features),
+            # t_con_targets_shape (B, n_continuous_features)
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
@@ -332,6 +353,41 @@ class Autoencoder(nn.Module):
         )
         return con_postprocessor
 
+    @staticmethod
+    def _get_t_in_cat(t_in: torch.tensor, n_categorical_features: int) -> torch.tensor:
+        return t_in[:, :n_categorical_features].to(torch.int)
+
+    @staticmethod
+    def _get_t_in_con(t_in: torch.tensor, n_continuous_features) -> torch.tensor:
+        return t_in[:, -n_continuous_features:].to(torch.float)
+
+    @staticmethod
+    def _preprocess_cat_features(
+        t_in_cat: torch.tensor, cat_preprocessor: nn.ModuleDict
+    ) -> Tuple[torch.tensor, Tuple[torch.tensor]]:
+        t_cat_targets = t_in_cat
+        tup_t_cat_targets = torch.unbind(input=t_cat_targets, dim=-1)
+        ls_t_cat_embd = [
+            embed(t_in_cat[:, i].long())
+            for i, embed in enumerate(cat_preprocessor["embeddings"])
+        ]
+        ls_t_cat_embd = list(
+            map(
+                lambda t_cat_embd: cat_preprocessor["dropout"](t_cat_embd),
+                ls_t_cat_embd,
+            )
+        )
+        t_cat_embd = torch.cat(tensors=ls_t_cat_embd, dim=-1)
+        return t_cat_embd, tup_t_cat_targets
+
+    @staticmethod
+    def _preprocess_con_features(
+        t_in_con: torch.tensor, con_preprocessor: nn.ModuleDict
+    ) -> Tuple[torch.tensor, torch.tensor]:
+        t_in_con_zscores = con_preprocessor["normalizer"](t_in_con)
+        t_con_zscore_targets = t_in_con_zscores
+        t_in_con_zscores = con_preprocessor["batch_norm"](t_in_con)
+        return t_in_con_zscores, t_con_zscore_targets
     @staticmethod
     def _get_sr_low(
         sr_min: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
