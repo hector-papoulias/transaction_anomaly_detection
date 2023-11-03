@@ -87,6 +87,30 @@ class Tokenizer:
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
 
+    @overload
+    def encode(self, token_or_ls_tokens: str) -> int:
+        ...
+
+    @overload
+    def encode(self, token_or_ls_tokens: List[str]) -> List[int]:
+        ...
+
+    def encode(self, token_or_ls_tokens):
+        if isinstance(token_or_ls_tokens, list):
+            return self._encode_ls_tokens(
+                ls_tokens=token_or_ls_tokens,
+                token_to_encoding=self._token_to_encoding,
+            )
+        if isinstance(token_or_ls_tokens, tuple):
+            return self._encode_ls_tokens(
+                ls_tokens=token_or_ls_tokens,
+                token_to_encoding=self._token_to_encoding,
+            )
+        if isinstance(token_or_ls_tokens, str):
+            return self._encode_token(
+                token=token_or_ls_tokens,
+                token_to_encoding=self._token_to_encoding,
+            )
 
     @overload
     def decode(self, encoded_token_or_ls_encoded_tokens: int) -> str:
