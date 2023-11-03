@@ -67,6 +67,24 @@ class TransactionAnomalyDetector:
     @property
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
+
+    @staticmethod
+    @torch.no_grad()
+    def _get_loss_tensors(
+        autoencoder: Autoencoder,
+        t_input_data: torch.tensor,  # Shape: (B, n_cat_features + n_con_features)
+        loss_batch_reduction: str,  # 'none', 'mean', or 'sum'
+    ) -> Tuple[torch.tensor, torch.tensor, torch.tensor]:
+        _, _, _, t_loss, t_cat_losses, t_con_losses = autoencoder.forward(
+            t_in=t_input_data,
+            compute_loss=True,
+            loss_batch_reduction=loss_batch_reduction,
+        )
+        return t_loss, t_cat_losses, t_con_losses
+
+    # Shapes: (B), (B, n_cat_features), (B, n_con_features) if no reduction is applied (loss_batch_reduction = 'none').
+    # Shapes: (), (n_cat_features), (n_con_features) if reduction is applied (loss_batch_reduction = 'mean' or 'sum').
+
     @classmethod
     def _prepare_t_input(
         cls,
