@@ -22,6 +22,7 @@ class Autoencoder(nn.Module):
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]],
         ls_con_features: List[int],
         ae_activation: nn.Module,
+        batchswap_noise_rate: float,
     ):
         super().__init__()
         # Extract and Save Categorical Feature Specs
@@ -60,6 +61,8 @@ class Autoencoder(nn.Module):
         dim_ae_external = self._n_continuous_features + n_embed_total
         # Save Loss
         self._loss = ReconstructionLoss()
+        # Save Batch Swap Noise Preprocessor
+        self._batchswap_noise = BatchSwapNoise(swap_rate=batchswap_noise_rate)
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
