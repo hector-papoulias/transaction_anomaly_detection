@@ -130,6 +130,49 @@ class Autoencoder(nn.Module):
         )
         cat_preprocessor["dropout"] = nn.Dropout(dropout_rate)
         return cat_preprocessor
+
+    @classmethod
+    def _get_standard_autoencoder(
+        cls,
+        dim_external: int,
+        encoder_layer_szs: List[int],
+        activation: nn.Module,
+        bn: bool,
+        dropout_rate: float,
+    ) -> nn.ModuleDict:
+        standard_autoencoder = nn.ModuleDict()
+        ls_encoder_layer_szs = [dim_external] + encoder_layer_szs
+        standard_autoencoder["encoder"] = cls._get_mlp(
+            layer_szs=ls_encoder_layer_szs,
+            activation=activation,
+            bn=bn,
+            dropout_rate=dropout_rate,
+        )
+        standard_autoencoder["decoder"] = cls._get_mlp(
+            layer_szs=ls_encoder_layer_szs[::-1],
+            activation=activation,
+            bn=bn,
+            dropout_rate=dropout_rate,
+        )
+        return standard_autoencoder
+
+    @staticmethod
+    def _get_mlp(
+        layer_szs: List[int], activation: nn.Module, bn: bool, dropout_rate: float
+    ) -> nn.Sequential:
+        mlp = nn.Sequential(
+            *[
+                LinBnDrop(
+                    dim_in=dim_in,
+                    dim_out=dim_out,
+                    activation=activation,
+                    bn=bn,
+                    dropout_rate=dropout_rate,
+                )
+                for dim_in, dim_out in zip(layer_szs, layer_szs[1:])
+            ]
+        )
+        return mlp
     @classmethod
     def _get_default_df_con_stats(cls, ls_con_features: List[str]) -> pd.DataFrame:
         dict_con_feature_to_mean_std_min_max = {}
