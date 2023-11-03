@@ -86,6 +86,24 @@ class Tokenizer:
     @property
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
+
+    @staticmethod
+    def _encode_token(token: str, token_to_encoding: Dict[str, int]) -> int:
+        return token_to_encoding[token]
+
+    @classmethod
+    def _encode_ls_tokens(
+        cls, ls_tokens: Union[List[str], Tuple[str]], token_to_encoding: Dict[str, int]
+    ) -> List[int]:
+        return list(
+            map(
+                lambda token: cls._encode_token(
+                    token=token, token_to_encoding=token_to_encoding
+                ),
+                ls_tokens,
+            )
+        )
+
     @staticmethod
     def _decode_encoded_token(
         encoded_token: int, encoding_to_token: Dict[int, str]
