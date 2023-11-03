@@ -87,6 +87,21 @@ class Tokenizer:
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
 
+
+    @classmethod
+    def _pad(
+        cls,
+        sequence: List[str],
+        pad_token: str,
+        pad_left: int,
+        pad_right: int,
+    ) -> List[str]:
+        return (
+            [pad_token for _ in range(pad_left)]
+            + sequence
+            + [pad_token for _ in range(pad_right)]
+        )
+
     @staticmethod
     def _encode_token(token: str, token_to_encoding: Dict[str, int]) -> int:
         return token_to_encoding[token]
