@@ -68,6 +68,79 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+
+    def detect_anomalies(
+        self, input_data: Union[pd.Series, pd.DataFrame]
+    ) -> pd.DataFrame:
+        return self._detect_anomalies(
+            reconstruction_loss_threshold=self._reconstruction_loss_threshold,
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+
+    def reconstruct(
+        self,
+        input_data: Union[pd.Series, pd.DataFrame],
+    ) -> pd.DataFrame:
+        return self._reconstruct(
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+
+    def encode(
+        self,
+        input_data: Union[pd.Series, pd.DataFrame],
+    ) -> torch.tensor:
+        return self._encode(
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+
+    def compute_mean_reconstruction_loss(
+        self,
+        input_data: Union[pd.Series, pd.DataFrame],
+    ) -> float:
+        return self._compute_mean_reconstruction_loss(
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizercat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+
+    def compute_reconstruction_loss_by_record(
+        self,
+        input_data: Union[pd.Series, pd.DataFrame],
+    ) -> pd.Series:
+        return self._compute_reconstruction_loss_by_record(
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+
+    def compute_reconstruction_loss_by_feature(
+        self,
+        input_data: Union[pd.Series, pd.DataFrame],
+    ) -> pd.Series:
+        return self._compute_reconstruction_loss_by_feature(
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+
     @classmethod
     def _detect_anomalies(
         cls,
