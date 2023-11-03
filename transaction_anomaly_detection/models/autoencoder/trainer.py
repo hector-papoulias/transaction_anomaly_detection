@@ -7,6 +7,21 @@ from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
 from transaction_anomaly_detection.models.tools.early_stopping import EarlyStopper
 
 class AutoencoderTrainer:
+
+    @staticmethod
+    def _training_step(
+        autoencoder: Autoencoder,
+        optimizer: torch.optim.Optimizer,
+        t_batch: torch.tensor,
+    ) -> torch.tensor:
+        optimizer.zero_grad()
+        _, _, _, t_loss, _, _ = autoencoder(
+            t_batch, compute_loss=True, loss_batch_reduction="mean"
+        )
+        t_loss.backward()
+        optimizer.step()
+        return t_loss.item()
+
     @torch.no_grad()
     @staticmethod
     def _compute_val_loss(
