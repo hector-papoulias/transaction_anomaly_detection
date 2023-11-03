@@ -68,6 +68,23 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+
+    @staticmethod
+    @torch.no_grad()
+    def _get_reconstruction_tensors(
+        autoencoder: Autoencoder,
+        t_input_data: torch.tensor,  # Shape: (B, n_cat_features + n_con_features)
+        argmax_cat_logits: bool,
+        denormalize_con_outputs: bool,
+    ) -> Tuple[Optional[Tuple[torch.tensor]], Optional[torch.tensor]]:
+        _, tup_t_out_cat, t_out_con, _, _, _ = autoencoder.forward(
+            t_in=t_input_data,
+            compute_loss=False,
+            argmax_cat_logits=argmax_cat_logits,
+            denormalize_con_outputs=denormalize_con_outputs,
+        )
+        return tup_t_out_cat, t_out_con
+
     @staticmethod
     @torch.no_grad()
     def _get_latent_rep_tensor(
