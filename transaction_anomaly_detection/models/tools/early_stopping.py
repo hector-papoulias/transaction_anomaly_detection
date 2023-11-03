@@ -48,6 +48,21 @@ class EarlyStopper:
     @property
     def best_model(self) -> nn.Module:
         return self._best_model
+
+    @staticmethod
+    def _get_best_epoch_metric_model(
+        current_best_epoch: int,
+        latest_epoch: int,
+        current_best_metric: float,
+        latest_metric: float,
+        current_best_model: nn.Module,
+        latest_model: nn.Module,
+    ) -> Tuple[int, float, nn.Module]:
+        if latest_metric <= current_best_metric:
+            return latest_epoch, latest_metric, latest_model
+        else:
+            return current_best_epoch, current_best_metric, current_best_model
+
     @staticmethod
     def _get_ls_historic_metrics_updated(
         latest_metric: float, patience: int, ls_historic_metrics_current: List[float]
