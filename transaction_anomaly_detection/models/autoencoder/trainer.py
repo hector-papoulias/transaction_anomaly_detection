@@ -31,6 +31,31 @@ class AutoencoderTrainer:
             t_in=t_dataset_val, compute_loss=True, loss_batch_reduction="mean"
         )
         return t_val_loss.item()
+
+    @staticmethod
+    def _get_progress_bar_desc(
+        current_epoch: int,
+        previous_epoch_val_loss: float,
+        min_loss: float,
+        best_epoch: int,
+    ) -> str:
+        progress_bar_desc = f"Current Epoch: {current_epoch}." + "\t"
+        progress_bar_desc += (
+            f"Previous Epoch Val Loss: {previous_epoch_val_loss}." + "\t"
+        )
+        progress_bar_desc += f"Min Val Loss: {min_loss} @ Epoch {best_epoch}."
+        return progress_bar_desc
+
+    @staticmethod
+    def _get_loss_evolution_update(
+        epoch: int, train_loss: float, val_loss: float
+    ) -> str:
+        return f"Epoch {epoch}: train_loss = {train_loss}, val loss: {val_loss}"
+
+    @staticmethod
+    def _get_train_recap(best_epoch: int, min_val_loss: float) -> str:
+        return f"Min Val Loss @Epoch {best_epoch}: {min_val_loss} "
+
     @torch.no_grad()
     @staticmethod
     def _get_batch_generator(
