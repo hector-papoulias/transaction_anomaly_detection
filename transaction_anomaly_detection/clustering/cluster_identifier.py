@@ -6,6 +6,27 @@ import geopandas as gpd
 from sklearn.neighbors import BallTree
 class ClusterIdentifier:
 
+    @classmethod
+    def _identify_clusters(
+        cls,
+        gdf_transactions=gdf_transactions,
+        n_nbrs=n_nbrs,
+        crs=crs,
+        gdf_centers=gdf_centers,
+    ) -> Tuple[pd.DataFrame, List[gpd.GeoDataFrame]]:
+        distances, indices = cls._get_cluster_distances_indices(
+            gdf_transactions=gdf_transactions,
+            n_nbrs=n_nbrs,
+            crs=crs,
+            gdf_centers=gdf_centers,
+        )
+        df_cluster_stats, ls_clusters = cls.__format_cluster_output(
+            gdf_transactions=gdf_transactions,
+            cluster_distances=distances,
+            cluster_indices=indices,
+        )
+        return df_cluster_stats, ls_clusters
+
     @staticmethod
     def _format_cluster_output(
         gdf_transactions: gpd.GeoDataFrame,
