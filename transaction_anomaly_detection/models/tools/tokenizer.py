@@ -87,6 +87,21 @@ class Tokenizer:
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
 
+    def pad(
+        self,
+        sequence: List[str],
+        pad_left: Optional[int] = 0,
+        pad_right: Optional[int] = 0,
+    ) -> List[str]:
+        if pad_left < 0 or pad_right < 0:
+            raise ValueError("pad_left and pad_right should be non-negative integers")
+        return self._pad(
+            sequence=sequence,
+            pad_token=self._pad_token,
+            pad_left=pad_left,
+            pad_right=pad_right,
+        )
+
     @overload
     def encode(self, token_or_ls_tokens: str) -> int:
         ...
