@@ -68,6 +68,28 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+    @staticmethod
+    def _format_sr_loss_by_record(
+        index: List[Any],
+        t_reconstruction_loss: torch.tensor,  # t_reconstruction_loss shape: (B)
+    ) -> pd.Series:
+        sr_loss_by_record = pd.Series(data=t_reconstruction_loss.tolist(), index=index)
+        return sr_loss_by_record
+
+    @staticmethod
+    def _format_sr_loss_by_feature(dict_loss_by_feature: Dict[str, float]) -> pd.Series:
+        sr_loss_by_feature = pd.Series(dict_loss_by_feature)
+        return sr_loss_by_feature.sort_values(ascending=False)
+
+    @staticmethod
+    def _get_dict_loss_by_feature(
+        ls_features: List[str],
+        t_losses: torch.tensor,  # Shape (n_cat_features + n_con_features)
+    ) -> Dict[str, float]:
+        dict_loss_by_feature = {}
+        for i, feature in enumerate(ls_features):
+            dict_loss_by_feature[feature] = t_losses[i].item()
+        return dict_loss_by_feature
 
     @staticmethod
     @torch.no_grad()
