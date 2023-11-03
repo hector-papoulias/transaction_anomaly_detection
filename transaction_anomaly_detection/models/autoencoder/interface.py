@@ -69,6 +69,34 @@ class TransactionAnomalyDetector:
         return self._reconstruction_loss_threshold
 
     @classmethod
+    def _detect_anomalies(
+        cls,
+        autoencoder: Autoencoder,
+        reconstruction_loss_threshold: float,
+        input_data: Union[pd.Series, pd.DataFrame],
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+    ) -> pd.DataFrame:
+        sr_loss_by_record = cls._compute_reconstruction_loss_by_record(
+            autoencoder=autoencoder,
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        idx_anomalies = cls._get_idx_anomalies(
+            sr_loss_by_record=sr_loss_by_record,
+            reconstruction_loss_threshold=reconstruction_loss_threshold,
+        )
+        df_anomalies = cls._format_df_anomalies(
+            input_data=input_data,
+            idx_anomalies=idx_anomalies,
+            sr_loss_by_record=sr_loss_by_record,
+        )
+        return df_anomalies
+
+    @classmethod
     def _reconstruct(
         cls,
         autoencoder: Autoencoder,
