@@ -95,6 +95,41 @@ class Autoencoder(nn.Module):
             len(ls_categories_n_embd[0])
             for ls_categories_n_embd in dict_cat_feature_to_ls_categories_n_embd.values()
         ]
+
+    @staticmethod
+    def _get_con_preprocessor(
+        n_continuous_features: int,
+        sr_feature_means: pd.Series,
+        sr_feature_stds: pd.Series,
+    ) -> nn.ModuleDict:
+        con_preprocessor = nn.ModuleDict()
+        con_preprocessor["normalizer"] = ContinuousFeatureNormalizer(
+            t_means=torch.tensor(
+                sr_feature_means.tolist(), dtype=torch.float, requires_grad=False
+            ),
+            t_stds=torch.tensor(
+                sr_feature_stds.tolist(), dtype=torch.float, requires_grad=False
+            ),
+        )
+        con_preprocessor["batch_norm"] = nn.BatchNorm1d(n_continuous_features)
+        return con_preprocessor
+
+    @staticmethod
+    def _get_cat_preprocessor(
+        dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]],
+        dropout_rate: float,
+    ) -> nn.ModuleDict:
+        cat_preprocessor = nn.ModuleDict()
+        cat_preprocessor["embeddings"] = nn.ModuleList(
+            [
+                nn.Embedding(
+                    num_embeddings=len(ls_categories), embedding_dim=embedding_dim
+                )
+                for ls_categories, embedding_dim in dict_cat_feature_to_ls_categories_n_embd.values()
+            ]
+        )
+        cat_preprocessor["dropout"] = nn.Dropout(dropout_rate)
+        return cat_preprocessor
     @classmethod
     def _get_default_df_con_stats(cls, ls_con_features: List[str]) -> pd.DataFrame:
         dict_con_feature_to_mean_std_min_max = {}
