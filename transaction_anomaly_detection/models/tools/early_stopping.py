@@ -48,6 +48,16 @@ class EarlyStopper:
     @property
     def best_model(self) -> nn.Module:
         return self._best_model
+    @staticmethod
+    def _get_ls_historic_metrics_updated(
+        latest_metric: float, patience: int, ls_historic_metrics_current: List[float]
+    ):
+        ls_historic_metrics_updated = ls_historic_metrics_current.copy()
+        ls_historic_metrics_updated.append(latest_metric)
+        if len(ls_historic_metrics_updated) > 1 + patience:
+            ls_historic_metrics_updated.pop(0)
+        return ls_historic_metrics_updated
+
     @classmethod
     def _stopping_condition_met(
         cls,
