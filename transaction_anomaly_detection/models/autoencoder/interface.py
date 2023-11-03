@@ -68,6 +68,53 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+    def fit(
+        self,
+        df_dataset: pd.DataFrame,
+        contamination: float,
+        val_ratio: float,
+        sz_batch: int,
+        learning_rate: float,
+        patience: int,
+        loss_delta_threshold: float,
+        max_n_epochs: Optional[int] = None,
+        verbose: Optional[bool] = False,
+    ) -> Dict[str, pd.Series]:
+        self._autoencoder.fit_continuous_feature_statistics(df_dataset=df_dataset)
+        t_dataset = self._prepare_t_input(
+            input_data=df_dataset,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+        self._autoencoder, dict_loss_evolution = AutoencoderTrainer.train(
+            autoencoder=self._autoencoder,
+            t_dataset=t_dataset,
+            val_ratio=val_ratio,
+            sz_batch=sz_batch,
+            learning_rate=learning_rate,
+            patience=patience,
+            loss_delta_threshold=loss_delta_threshold,
+            max_n_epochs=max_n_epochs,
+            verbose=verbose,
+        )
+        self.fit_reconstruction_loss_threshold(
+            df_dataset=df_dataset, contamination=contamination
+        )
+        return dict_loss_evolution
+
+    def fit_reconstruction_loss_threshold(
+        self, df_dataset: pd.DataFrame, contamination: float
+    ):
+        threshold = self._compute_reconstruction_loss_threshold(
+            quantile=1 - contamination,
+            autoencoder=self._autoencoder,
+            input_data=df_dataset,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+        )
+        self._reconstruction_loss_threshold = threshold
 
     def detect_anomalies(
         self, input_data: Union[pd.Series, pd.DataFrame]
