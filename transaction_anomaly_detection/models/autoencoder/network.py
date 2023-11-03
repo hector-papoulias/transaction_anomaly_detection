@@ -165,6 +165,8 @@ class Autoencoder(nn.Module):
     def forward(
         self,
         t_in: torch.tensor,
+        argmax_cat_logits: Optional[bool] = False,
+        denormalize_con_outputs: Optional[bool] = False,
     ) -> Tuple[
         torch.tensor,
         Tuple[torch.tensor],
@@ -208,6 +210,47 @@ class Autoencoder(nn.Module):
         )
         # t_encoded shape: (B, encoder_layer_szs[-1])
         # t_decoded shape: (B, dim_ae_external) = (B, n_con_features+sum(n_embd_cat))
+
+        # Reconstructions
+        tup_t_cat_logits, tup_t_cat_reconstructions = None, None
+        if self._has_cat:
+            (
+                tup_t_cat_logits,
+                tup_t_cat_reconstructions,
+            ) = self._reconstruct_cat_features(
+                t_decoded=t_decoded,
+                ls_n_categories=self._ls_n_categories,
+                cat_postprocessor=self._cat_postprocessor,
+                argmax_cat_logits=argmax_cat_logits,
+            )
+        # tup_t_cat_logits: tuple containing a tensor of shape (B, n_categories) for each categorical feature.
+        # tup_t_cat_reconstructions: tuple containing a tensor of shape (B) for each categorical feature.
+        t_out_con_zscores, t_out_con_reconstructions = None, None
+        if self._has_con:
+            (
+                t_out_con_zscores,
+                t_out_con_reconstructions,
+            ) = self._reconstruct_con_features(
+                t_decoded=t_decoded,
+                con_preprocessor=self._con_preprocessor,
+                con_postprocessor=self._con_postprocessor,
+                denormalize_con_outputs=denormalize_con_outputs,
+            )
+        # t_out_con_zscores shape: (B, n_con_features)
+        # t_out_con_reconstructions shape: (B, n_con_features)
+
+        # Reconstruction Output Selection
+        tup_t_out_cat = self._get_cat_output(
+            tup_t_cat_logits=tup_t_cat_logits,
+            tup_t_cat_reconstructions=tup_t_cat_reconstructions,
+        )
+        # tup_t_out_cat: tuple containing a tensor for each categorical feature.
+        # The shapes are either all (B, n_categories)---logits--- or (B)---reconstructions
+        t_out_con = self._get_con_output(
+            t_out_con_zscores=t_out_con_zscores,
+            t_out_con_reconstructions=t_out_con_reconstructions,
+        )
+        # t_out_con shape: (B, n_con_features)
     @staticmethod
     def _get_dict_cat_feature_to_ls_categories(
         dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]]
@@ -410,6 +453,66 @@ class Autoencoder(nn.Module):
         t_encoded = standard_autoencoder["encoder"](ae_input)
         t_decoded = standard_autoencoder["decoder"](t_encoded)
         return t_encoded, t_decoded
+
+    @staticmethod
+    def _reconstruct_cat_features(
+        t_decoded: torch.tensor,
+        ls_n_categories: List[int],
+        cat_postprocessor: nn.ModuleDict,
+        argmax_cat_logits: bool,
+    ) -> Tuple[Tuple[torch.tensor], Optional[Tuple[torch.tensor]]]:
+        t_out_cat_tot = cat_postprocessor["t_decoded_to_logits"](t_decoded)
+        tup_t_cat_logits = torch.split(
+            tensor=t_out_cat_tot,
+            split_size_or_sections=ls_n_categories,
+            dim=-1,
+        )
+        tup_t_cat_reconstructions = None
+        if argmax_cat_logits:
+            ls_t_cat_reconstructions = []
+            for t_cat_logits in tup_t_cat_logits:
+                ls_t_cat_reconstructions.append(torch.argmax(t_cat_logits, dim=-1))
+            tup_t_cat_reconstructions = tuple(ls_t_cat_reconstructions)
+        return tup_t_cat_logits, tup_t_cat_reconstructions
+
+    @staticmethod
+    def _get_cat_output(
+        tup_t_cat_logits: Tuple[torch.tensor],
+        tup_t_cat_reconstructions: Optional[Tuple[torch.tensor]],
+    ) -> Tuple[torch.tensor]:
+        tup_t_out_cat = (
+            tup_t_cat_reconstructions
+            if tup_t_cat_reconstructions is not None
+            else tup_t_cat_logits
+        )
+        return tup_t_out_cat
+
+    @staticmethod
+    def _reconstruct_con_features(
+        t_decoded: torch.tensor,
+        con_preprocessor: nn.ModuleDict,
+        con_postprocessor: nn.ModuleDict,
+        denormalize_con_outputs: bool,
+    ) -> Tuple[torch.tensor, Optional[torch.tensor]]:
+        t_out_con_zscores = con_postprocessor["t_decoded_to_zscores"](t_decoded)
+        t_out_con_reconstructions = None
+        if denormalize_con_outputs:
+            t_out_con_reconstructions = con_preprocessor["normalizer"](
+                t_out_con_zscores, denormalize=True
+            )
+        return t_out_con_zscores, t_out_con_reconstructions
+
+    @staticmethod
+    def _get_con_output(
+        t_out_con_zscores: torch.tensor,
+        t_out_con_reconstructions: Optional[torch.tensor],
+    ) -> torch.tensor:
+        t_out_con = (
+            t_out_con_reconstructions
+            if t_out_con_reconstructions is not None
+            else t_out_con_zscores
+        )
+        return t_out_con
     @staticmethod
     def _get_sr_low(
         sr_min: pd.Series, sr_mean: pd.Series, sr_std: pd.Series
