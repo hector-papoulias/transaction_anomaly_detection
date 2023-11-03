@@ -87,6 +87,43 @@ class Tokenizer:
     def regular_token_encodings(self) -> Set[int]:
         return self._regular_token_encodings
 
+    def ls_tokens_to_str(self, ls_tokens: List[str]) -> str:
+        if self._unk_token is None and not self._tokens_in_vocabulary(
+            set_tokens=set(ls_tokens), vocabulary=self._vocabulary
+        ):
+            raise ValueError("Token not recognized: consider adding an UNK token.")
+        else:
+            ls_tokens = self._replace_unknown_tokens(
+                ls_tokens=ls_tokens,
+                vocabulary=self._vocabulary,
+                unk_token=self._unk_token,
+            )
+        return self._ls_tokens_to_str(ls_tokens=ls_tokens)
+
+    def str_to_ls_tokens(self, str_input: str) -> List[str]:
+        ls_tokens = self._str_to_ls_tokens(str_input=str_input)
+        if self._unk_token is None and not self._tokens_in_vocabulary(
+            set_tokens=set(ls_tokens), vocabulary=self._vocabulary
+        ):
+            raise ValueError("Token not recognized: consider adding an UNK token.")
+        else:
+            ls_tokens = self._replace_unknown_tokens(
+                ls_tokens=ls_tokens,
+                vocabulary=self._vocabulary,
+                unk_token=self._unk_token,
+            )
+        return ls_tokens
+
+    @staticmethod
+    def _ls_tokens_to_str(
+        ls_tokens: List[str],
+    ) -> str:
+        return " ".join(ls_tokens)
+
+    @staticmethod
+    def _str_to_ls_tokens(str_input: str) -> List[str]:
+        return list(str_input)
+
     @classmethod
     def _replace_unknown_tokens(
         cls, ls_tokens: List[str], vocabulary: Set[str], unk_token: str
