@@ -225,7 +225,6 @@ class TransactionAnomalyDetector:
         ls_con_features: List[str],
         dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
     ) -> pd.DataFrame:
-        ls_input_features = cls._extract_feature_names(input_data=input_data)
         t_input_data = cls._prepare_t_input(
             input_data=input_data,
             ls_cat_features=ls_cat_features,
@@ -249,7 +248,8 @@ class TransactionAnomalyDetector:
             t_out_con_reconstructions=t_out_con_reconstructions,
         )
         df_reconstructions = cls._format_df_reconstructions(
-            ls_cols_original=ls_input_features,
+            ls_index_original=cls._extract_index(input_data=input_data),
+            ls_cols_original=cls._extract_feature_names(input_data=input_data),
             dict_reconstructions=dict_reconstructions,
         )
         return df_reconstructions
@@ -400,10 +400,11 @@ class TransactionAnomalyDetector:
 
     @staticmethod
     def _format_df_reconstructions(
+        ls_index_original: List[str],
         ls_cols_original: List[str],
         dict_reconstructions: Dict[str, Union[List[str], List[float]]],
     ) -> pd.DataFrame:
-        df_reconstructions = pd.DataFrame(dict_reconstructions)
+        df_reconstructions = pd.DataFrame(dict_reconstructions, index=ls_index_original)
         df_reconstructions = df_reconstructions.loc[
             :,
             [
@@ -517,7 +518,7 @@ class TransactionAnomalyDetector:
         autoencoder: Autoencoder,
         t_input_data: torch.tensor,  # Shape: (B, n_cat_features + n_con_features)
         loss_batch_reduction: str,  # 'none', 'mean', or 'sum'
-    ) -> Tuple[torch.tensor, torch.tensor, torch.tensor]:
+    ) -> Tuple[torch.tensor, Optional[torch.tensor], Optional[torch.tensor]]:
         _, _, _, t_loss, t_cat_losses, t_con_losses = autoencoder.forward(
             t_in=t_input_data,
             compute_loss=True,
@@ -590,6 +591,13 @@ class TransactionAnomalyDetector:
             return input_data.index.tolist()
         elif type(input_data) == pd.DataFrame:
             return input_data.columns.tolist()
+
+    @staticmethod
+    def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[str]:
+        if type(input_data) == pd.Series:
+            return [input_data.name] if input_data.name is not None else [0]
+        elif type(input_data) == pd.DataFrame:
+            return input_data.index.tolist()
 
     @staticmethod
     def _get_dict_cat_feature_to_tokenizer(
