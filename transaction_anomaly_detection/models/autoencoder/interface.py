@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Union, Tuple, Generator, Any
+from typing import List, Tuple, Dict, Hashable, Optional, Union, Generator
 import numpy as np
 import pandas as pd
 import torch
@@ -393,14 +393,14 @@ class TransactionAnomalyDetector:
     @staticmethod
     def _get_idx_anomalies(
         sr_loss_by_record: pd.Series, reconstruction_loss_threshold: float
-    ) -> List[int]:
+    ) -> List[Hashable]:
         return list(
             sr_loss_by_record[sr_loss_by_record > reconstruction_loss_threshold].index
         )
 
     @staticmethod
     def _format_df_reconstructions(
-        ls_index_original: List[str],
+        ls_index_original: List[Hashable],
         ls_cols_original: List[str],
         dict_reconstructions: Dict[str, Union[List[str], List[float]]],
     ) -> pd.DataFrame:
@@ -593,7 +593,7 @@ class TransactionAnomalyDetector:
             return input_data.columns.tolist()
 
     @staticmethod
-    def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[str]:
+    def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[Hashable]:
         if type(input_data) == pd.Series:
             return [input_data.name] if input_data.name is not None else [0]
         elif type(input_data) == pd.DataFrame:
