@@ -475,6 +475,13 @@ class TransactionAnomalyDetector:
         return sr_loss_by_feature.sort_values(ascending=False)
 
     @staticmethod
+    def _format_df_loss_by_record(
+        dict_loss_by_feature: Dict[str, List[float]], index: List[Hashable]
+    ) -> pd.DataFrame:
+        df_loss_by_record = pd.DataFrame(data=dict_loss_by_feature, index=index)
+        return df_loss_by_record
+
+    @staticmethod
     def _get_dict_loss_by_feature(
         ls_features: List[str],
         t_losses: torch.tensor,  #  t_losses shape: (n_cat_features + n_con_features) or (B, n_cat_features + n_con_features)
