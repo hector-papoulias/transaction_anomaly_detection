@@ -338,7 +338,7 @@ class TransactionAnomalyDetector:
         )
         # t_reconstruction_loss shape: (B)
         sr_loss_by_record = cls._format_sr_loss_by_record(
-            index=list(input_data.index), t_reconstruction_loss=t_reconstruction_loss
+            index=input_data.index.tolist(), t_reconstruction_loss=t_reconstruction_loss
         )
         return sr_loss_by_record
 
@@ -375,9 +375,10 @@ class TransactionAnomalyDetector:
     def _format_df_anomalies(
         input_data: pd.DataFrame, idx_anomalies: List[int], sr_loss_by_record
     ) -> pd.DataFrame:
+        input_data = input_data.copy()
+        input_data["loss"] = sr_loss_by_record
         df_anomalies = input_data.iloc[idx_anomalies].copy()
         if not df_anomalies.empty:
-            df_anomalies["loss"] = sr_loss_by_record
             df_anomalies.sort_values(by="loss", ascending=False, inplace=True)
             df_anomalies.reset_index(inplace=True)
             df_anomalies.rename(columns={"index": "index"}, inplace=True)
