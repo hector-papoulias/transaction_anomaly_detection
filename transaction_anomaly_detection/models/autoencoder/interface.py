@@ -118,7 +118,7 @@ class TransactionAnomalyDetector:
 
     def detect_anomalies(
         self, input_data: Union[pd.Series, pd.DataFrame]
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         return self._detect_anomalies(
             reconstruction_loss_threshold=self._reconstruction_loss_threshold,
             autoencoder=self._autoencoder,
@@ -197,7 +197,7 @@ class TransactionAnomalyDetector:
         ls_cat_features: List[str],
         ls_con_features: List[str],
         dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         sr_loss_by_record = cls._compute_reconstruction_loss_by_record(
             autoencoder=autoencoder,
             input_data=input_data,
@@ -375,11 +375,11 @@ class TransactionAnomalyDetector:
 
     @staticmethod
     def _format_df_anomalies(
-        input_data: pd.DataFrame, idx_anomalies: List[int], sr_loss_by_record
-    ) -> pd.DataFrame:
+        input_data: pd.DataFrame, idx_anomalies: List[Hashable], sr_loss_by_record
+    ) -> Optional[pd.DataFrame]:
         input_data = input_data.copy()
         input_data["loss"] = sr_loss_by_record
-        df_anomalies = input_data.iloc[idx_anomalies].copy()
+        df_anomalies = input_data.loc[idx_anomalies].copy()
         if not df_anomalies.empty:
             df_anomalies.sort_values(by="loss", ascending=False, inplace=True)
             df_anomalies.reset_index(inplace=True)
@@ -388,7 +388,7 @@ class TransactionAnomalyDetector:
             df_anomalies = df_anomalies.loc[
                 :, ["loss"] + [col for col in df_anomalies.columns if col != "loss"]
             ]
-        return df_anomalies
+            return df_anomalies
 
     @staticmethod
     def _get_idx_anomalies(
