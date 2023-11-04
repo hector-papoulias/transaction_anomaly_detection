@@ -1,10 +1,12 @@
 from tqdm.notebook import tqdm
-from typing import Dict, Optional, Tuple, Generator
+from typing import Dict, Tuple, Generator, Union, Optional
 import numpy as np
 import pandas as pd
 import torch
 from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
-from transaction_anomaly_detection.models.tools.early_stopping import EarlyStopper
+from transaction_anomaly_detection.models.tools.early_stopping.standard import (
+    StandardStopper,
+)
 
 
 class AutoencoderTrainer:
@@ -18,7 +20,7 @@ class AutoencoderTrainer:
         learning_rate: float,
         patience: int,
         loss_delta_threshold: float,
-        max_n_epochs: Optional[int] = None,
+        max_n_epochs: Optional[Union[int, float]] = np.nan,
         verbose: Optional[bool] = False,
     ) -> Tuple[Autoencoder, Dict[str, pd.Series]]:
         dict_loss_evolution_train = {}
@@ -26,7 +28,7 @@ class AutoencoderTrainer:
         optimizer = torch.optim.Adam(
             params=list(autoencoder.parameters()), lr=learning_rate
         )
-        early_stopper = EarlyStopper(
+        early_stopper = StandardStopper(
             patience=patience,
             delta_threshold=loss_delta_threshold,
             max_n_epochs=max_n_epochs,

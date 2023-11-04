@@ -77,7 +77,7 @@ class TransactionAnomalyDetector:
         learning_rate: float,
         patience: int,
         loss_delta_threshold: float,
-        max_n_epochs: Optional[int] = None,
+        max_n_epochs: Optional[Union[int, float]] = np.nan,
         verbose: Optional[bool] = False,
     ) -> Dict[str, pd.Series]:
         self._autoencoder.fit_continuous_feature_statistics(df_dataset=df_dataset)
