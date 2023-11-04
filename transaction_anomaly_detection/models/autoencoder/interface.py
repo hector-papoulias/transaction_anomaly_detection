@@ -477,11 +477,15 @@ class TransactionAnomalyDetector:
     @staticmethod
     def _get_dict_loss_by_feature(
         ls_features: List[str],
-        t_losses: torch.tensor,  # Shape (n_cat_features + n_con_features)
-    ) -> Dict[str, float]:
+        t_losses: torch.tensor,  #  t_losses shape: (n_cat_features + n_con_features) or (B, n_cat_features + n_con_features)
+    ) -> Dict[str, Union[float, List[float]]]:
         dict_loss_by_feature = {}
         for i, feature in enumerate(ls_features):
-            dict_loss_by_feature[feature] = t_losses[i].item()
+            if t_losses.dim() == 1:
+                feature_loss = t_losses[i].item()
+            elif t_losses.dim() == 2:
+                feature_loss = t_losses[:, i].tolist()
+            dict_loss_by_feature[feature] = feature_loss
         return dict_loss_by_feature
 
     @staticmethod
