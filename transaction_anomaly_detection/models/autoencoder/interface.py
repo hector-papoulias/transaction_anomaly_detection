@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Union, Tuple, Generator, Any
+from typing import List, Tuple, Dict, Hashable, Optional, Union, Generator
 import numpy as np
 import pandas as pd
 import torch
@@ -118,7 +118,7 @@ class TransactionAnomalyDetector:
 
     def detect_anomalies(
         self, input_data: Union[pd.Series, pd.DataFrame]
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         return self._detect_anomalies(
             reconstruction_loss_threshold=self._reconstruction_loss_threshold,
             autoencoder=self._autoencoder,
@@ -161,18 +161,6 @@ class TransactionAnomalyDetector:
             input_data=input_data,
             ls_cat_features=self._autoencoder.ls_cat_features,
             ls_con_features=self._autoencoder.ls_con_features,
-            dict_cat_feature_to_tokenizercat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
-        )
-
-    def compute_reconstruction_loss_by_record(
-        self,
-        input_data: Union[pd.Series, pd.DataFrame],
-    ) -> pd.Series:
-        return self._compute_reconstruction_loss_by_record(
-            autoencoder=self._autoencoder,
-            input_data=input_data,
-            ls_cat_features=self._autoencoder.ls_cat_features,
-            ls_con_features=self._autoencoder.ls_con_features,
             dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
         )
 
@@ -188,6 +176,20 @@ class TransactionAnomalyDetector:
             dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
         )
 
+    def compute_reconstruction_loss_by_record(
+        self,
+        input_data: Union[pd.Series, pd.DataFrame],
+        average_over_features: Optional[bool] = False,
+    ) -> pd.Series:
+        return self._compute_reconstruction_loss_by_record(
+            autoencoder=self._autoencoder,
+            input_data=input_data,
+            ls_cat_features=self._autoencoder.ls_cat_features,
+            ls_con_features=self._autoencoder.ls_con_features,
+            dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
+            average_over_features=average_over_features,
+        )
+
     @classmethod
     def _detect_anomalies(
         cls,
@@ -197,13 +199,14 @@ class TransactionAnomalyDetector:
         ls_cat_features: List[str],
         ls_con_features: List[str],
         dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         sr_loss_by_record = cls._compute_reconstruction_loss_by_record(
             autoencoder=autoencoder,
             input_data=input_data,
             ls_cat_features=ls_cat_features,
             ls_con_features=ls_con_features,
             dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+            average_over_features=True,
         )
         idx_anomalies = cls._get_idx_anomalies(
             sr_loss_by_record=sr_loss_by_record,
@@ -290,6 +293,7 @@ class TransactionAnomalyDetector:
             ls_cat_features=ls_cat_features,
             ls_con_features=ls_con_features,
             dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+            average_over_features=True,
         )
         return sr_loss_by_record.quantile(quantile)
 
@@ -317,32 +321,6 @@ class TransactionAnomalyDetector:
         return t_reconstruction_loss.item()
 
     @classmethod
-    def _compute_reconstruction_loss_by_record(
-        cls,
-        autoencoder: Autoencoder,
-        input_data: pd.DataFrame,
-        ls_cat_features: List[str],
-        ls_con_features: List[str],
-        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
-    ) -> pd.Series:
-        t_input_data = cls._prepare_t_input(
-            input_data=input_data,
-            ls_cat_features=ls_cat_features,
-            ls_con_features=ls_con_features,
-            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
-        )
-        t_reconstruction_loss, _, _ = cls._get_loss_tensors(
-            autoencoder=autoencoder,
-            t_input_data=t_input_data,
-            loss_batch_reduction="none",
-        )
-        # t_reconstruction_loss shape: (B)
-        sr_loss_by_record = cls._format_sr_loss_by_record(
-            index=input_data.index.tolist(), t_reconstruction_loss=t_reconstruction_loss
-        )
-        return sr_loss_by_record
-
-    @classmethod
     def _compute_reconstruction_loss_by_feature(
         cls,
         autoencoder: Autoencoder,
@@ -362,6 +340,8 @@ class TransactionAnomalyDetector:
             t_input_data=t_input_data,
             loss_batch_reduction="mean",
         )
+        # t_cat_losses shape: (n_cat_features)
+        # t_con_losses shape: (n_con_features)
         dict_loss_by_feature = cls._get_dict_loss_by_feature(
             ls_features=ls_cat_features + ls_con_features,
             t_losses=torch.cat(
@@ -373,13 +353,51 @@ class TransactionAnomalyDetector:
         )
         return sr_loss_by_feature
 
+    @classmethod
+    def _compute_reconstruction_loss_by_record(
+        cls,
+        autoencoder: Autoencoder,
+        input_data: pd.DataFrame,
+        ls_cat_features: List[str],
+        ls_con_features: List[str],
+        dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
+        average_over_features: bool,
+    ) -> Union[pd.DataFrame, pd.Series]:
+        t_input_data = cls._prepare_t_input(
+            input_data=input_data,
+            ls_cat_features=ls_cat_features,
+            ls_con_features=ls_con_features,
+            dict_cat_feature_to_tokenizer=dict_cat_feature_to_tokenizer,
+        )
+        _, t_cat_losses, t_con_losses = cls._get_loss_tensors(
+            autoencoder=autoencoder,
+            t_input_data=t_input_data,
+            loss_batch_reduction="none",
+        )
+        # t_cat_losses shape: (B, n_cat_features)
+        # t_con_losses shape: (B, n_con_features)
+        dict_loss_by_feature = cls._get_dict_loss_by_feature(
+            ls_features=ls_cat_features + ls_con_features,
+            t_losses=torch.cat(
+                [t for t in [t_cat_losses, t_con_losses] if t is not None], dim=-1
+            ),
+        )
+        df_loss_by_record = cls._format_df_loss_by_record(
+            dict_loss_by_feature=dict_loss_by_feature,
+            index=input_data.index.tolist(),
+        )
+        if average_over_features:
+            sr_loss_by_record = df_loss_by_record.mean(axis=1)
+            return sr_loss_by_record
+        return df_loss_by_record
+
     @staticmethod
     def _format_df_anomalies(
-        input_data: pd.DataFrame, idx_anomalies: List[int], sr_loss_by_record
-    ) -> pd.DataFrame:
+        input_data: pd.DataFrame, idx_anomalies: List[Hashable], sr_loss_by_record
+    ) -> Optional[pd.DataFrame]:
         input_data = input_data.copy()
         input_data["loss"] = sr_loss_by_record
-        df_anomalies = input_data.iloc[idx_anomalies].copy()
+        df_anomalies = input_data.loc[idx_anomalies].copy()
         if not df_anomalies.empty:
             df_anomalies.sort_values(by="loss", ascending=False, inplace=True)
             df_anomalies.reset_index(inplace=True)
@@ -388,19 +406,19 @@ class TransactionAnomalyDetector:
             df_anomalies = df_anomalies.loc[
                 :, ["loss"] + [col for col in df_anomalies.columns if col != "loss"]
             ]
-        return df_anomalies
+            return df_anomalies
 
     @staticmethod
     def _get_idx_anomalies(
         sr_loss_by_record: pd.Series, reconstruction_loss_threshold: float
-    ) -> List[int]:
+    ) -> List[Hashable]:
         return list(
             sr_loss_by_record[sr_loss_by_record > reconstruction_loss_threshold].index
         )
 
     @staticmethod
     def _format_df_reconstructions(
-        ls_index_original: List[str],
+        ls_index_original: List[Hashable],
         ls_cols_original: List[str],
         dict_reconstructions: Dict[str, Union[List[str], List[float]]],
     ) -> pd.DataFrame:
@@ -462,26 +480,29 @@ class TransactionAnomalyDetector:
         return ls_con_reconstruction
 
     @staticmethod
-    def _format_sr_loss_by_record(
-        index: List[Any],
-        t_reconstruction_loss: torch.tensor,  # t_reconstruction_loss shape: (B)
-    ) -> pd.Series:
-        sr_loss_by_record = pd.Series(data=t_reconstruction_loss.tolist(), index=index)
-        return sr_loss_by_record
-
-    @staticmethod
     def _format_sr_loss_by_feature(dict_loss_by_feature: Dict[str, float]) -> pd.Series:
         sr_loss_by_feature = pd.Series(dict_loss_by_feature)
         return sr_loss_by_feature.sort_values(ascending=False)
 
     @staticmethod
+    def _format_df_loss_by_record(
+        dict_loss_by_feature: Dict[str, List[float]], index: List[Hashable]
+    ) -> pd.DataFrame:
+        df_loss_by_record = pd.DataFrame(data=dict_loss_by_feature, index=index)
+        return df_loss_by_record
+
+    @staticmethod
     def _get_dict_loss_by_feature(
         ls_features: List[str],
-        t_losses: torch.tensor,  # Shape (n_cat_features + n_con_features)
-    ) -> Dict[str, float]:
+        t_losses: torch.tensor,  #  t_losses shape: (n_cat_features + n_con_features) or (B, n_cat_features + n_con_features)
+    ) -> Dict[str, Union[float, List[float]]]:
         dict_loss_by_feature = {}
         for i, feature in enumerate(ls_features):
-            dict_loss_by_feature[feature] = t_losses[i].item()
+            if t_losses.dim() == 1:
+                feature_loss = t_losses[i].item()
+            elif t_losses.dim() == 2:
+                feature_loss = t_losses[:, i].tolist()
+            dict_loss_by_feature[feature] = feature_loss
         return dict_loss_by_feature
 
     @staticmethod
@@ -593,7 +614,7 @@ class TransactionAnomalyDetector:
             return input_data.columns.tolist()
 
     @staticmethod
-    def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[str]:
+    def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[Hashable]:
         if type(input_data) == pd.Series:
             return [input_data.name] if input_data.name is not None else [0]
         elif type(input_data) == pd.DataFrame:
