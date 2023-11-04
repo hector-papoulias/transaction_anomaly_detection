@@ -364,7 +364,9 @@ class TransactionAnomalyDetector:
         )
         dict_loss_by_feature = cls._get_dict_loss_by_feature(
             ls_features=ls_cat_features + ls_con_features,
-            t_losses=torch.cat([t_cat_losses, t_con_losses]),
+            t_losses=torch.cat(
+                [t for t in [t_cat_losses, t_con_losses] if t is not None]
+            ),
         )
         sr_loss_by_feature = cls._format_sr_loss_by_feature(
             dict_loss_by_feature=dict_loss_by_feature

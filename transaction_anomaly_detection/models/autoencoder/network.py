@@ -173,9 +173,9 @@ class Autoencoder(nn.Module):
         torch.tensor,
         Tuple[torch.tensor],
         torch.tensor,
-        torch.tensor,
-        torch.tensor,
-        torch.tensor,
+        Optional[torch.tensor],
+        Optional[torch.tensor],
+        Optional[torch.tensor],
     ]:
         # BatchSwapNoise Augmentation
         t_in = self._batchswap_noise(t_in)
