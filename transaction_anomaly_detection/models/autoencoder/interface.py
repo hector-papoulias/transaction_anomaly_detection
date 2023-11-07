@@ -211,6 +211,8 @@ class TransactionAnomalyDetector:
         ls_con_features: List[str],
         dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
     ) -> Optional[pd.DataFrame]:
+        input_data = input_data.copy()
+        input_data = cls._handle_duplicate_index(input_data=input_data)
         sr_loss_by_record = cls._compute_reconstruction_loss_by_record(
             autoencoder=autoencoder,
             input_data=input_data,
@@ -404,15 +406,16 @@ class TransactionAnomalyDetector:
 
     @staticmethod
     def _format_df_anomalies(
-        input_data: pd.DataFrame, idx_anomalies: List[Hashable], sr_loss_by_record
+        input_data: pd.DataFrame,
+        idx_anomalies: List[Hashable],
+        sr_loss_by_record: pd.Series,
     ) -> Optional[pd.DataFrame]:
         input_data = input_data.copy()
         input_data["loss"] = sr_loss_by_record
         df_anomalies = input_data.loc[idx_anomalies].copy()
         if not df_anomalies.empty:
             df_anomalies.sort_values(by="loss", ascending=False, inplace=True)
-            df_anomalies.reset_index(inplace=True)
-            df_anomalies.rename(columns={"index": "index"}, inplace=True)
+            df_anomalies.reset_index(inplace=True, drop=True)
             df_anomalies.rename_axis(index="loss_rank", inplace=True)
             df_anomalies = df_anomalies.loc[
                 :, ["loss"] + [col for col in df_anomalies.columns if col != "loss"]
@@ -623,6 +626,19 @@ class TransactionAnomalyDetector:
             return input_data.index.tolist()
         elif type(input_data) == pd.DataFrame:
             return input_data.columns.tolist()
+
+    @staticmethod
+    def _handle_duplicate_index(
+        input_data: Union[pd.Series, pd.DataFrame]
+    ) -> Union[pd.Series, pd.DataFrame]:
+        if type(input_data) == pd.DataFrame:
+            input_data = input_data.copy()
+            if input_data.index.duplicated(keep="first").any():
+                input_data.reset_index(inplace=True, drop=False)
+                input_data.rename(columns={"index": "original_index"}, inplace=True)
+            else:
+                input_data["original_index"] = cls._extract_index(input_data=input_data)
+        return input_data
 
     @staticmethod
     def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[Hashable]:
