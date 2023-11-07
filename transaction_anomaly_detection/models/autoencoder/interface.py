@@ -11,13 +11,19 @@ from transaction_anomaly_detection.models.autoencoder.trainer import Autoencoder
 class TransactionAnomalyDetector:
     def __init__(
         self,
-        dict_cat_feature_to_ls_categories_n_embd: Dict[str, Tuple[List[str], int]],
-        ls_con_features: List[str],
         encoder_layer_szs: List[int],
         ae_activation: nn.Module,
         dropout_rate: Optional[float] = 0,
         batchswap_noise_rate: Optional[float] = 0,
+        dict_cat_feature_to_ls_categories_n_embd: Optional[
+            Dict[str, Tuple[List[str], int]]
+        ] = None,
+        ls_con_features: Optional[List[str]] = None,
     ):
+        if dict_cat_feature_to_ls_categories_n_embd is None:
+            dict_cat_feature_to_ls_categories_n_embd = {}
+        if ls_con_features is None:
+            ls_con_features = []
         self._autoencoder = Autoencoder(
             dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd,
             ls_con_features=ls_con_features,
@@ -183,7 +189,7 @@ class TransactionAnomalyDetector:
         self,
         input_data: Union[pd.Series, pd.DataFrame],
         average_over_features: Optional[bool] = False,
-    ) -> pd.Series:
+    ) -> Union[pd.Series, pd.DataFrame]:
         return self._compute_reconstruction_loss_by_record(
             autoencoder=self._autoencoder,
             input_data=input_data,
@@ -203,6 +209,8 @@ class TransactionAnomalyDetector:
         ls_con_features: List[str],
         dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
     ) -> Optional[pd.DataFrame]:
+        input_data = input_data.copy()
+        input_data = cls._handle_duplicate_index(input_data=input_data)
         sr_loss_by_record = cls._compute_reconstruction_loss_by_record(
             autoencoder=autoencoder,
             input_data=input_data,
@@ -360,12 +368,12 @@ class TransactionAnomalyDetector:
     def _compute_reconstruction_loss_by_record(
         cls,
         autoencoder: Autoencoder,
-        input_data: pd.DataFrame,
+        input_data: Union[pd.Series, pd.DataFrame],
         ls_cat_features: List[str],
         ls_con_features: List[str],
         dict_cat_feature_to_tokenizer: Dict[str, Tokenizer],
         average_over_features: bool,
-    ) -> Union[pd.DataFrame, pd.Series]:
+    ) -> Union[pd.Series, pd.DataFrame]:
         t_input_data = cls._prepare_t_input(
             input_data=input_data,
             ls_cat_features=ls_cat_features,
@@ -387,7 +395,7 @@ class TransactionAnomalyDetector:
         )
         df_loss_by_record = cls._format_df_loss_by_record(
             dict_loss_by_feature=dict_loss_by_feature,
-            index=input_data.index.tolist(),
+            index=cls._extract_index(input_data=input_data),
         )
         if average_over_features:
             sr_loss_by_record = df_loss_by_record.mean(axis=1)
@@ -396,15 +404,16 @@ class TransactionAnomalyDetector:
 
     @staticmethod
     def _format_df_anomalies(
-        input_data: pd.DataFrame, idx_anomalies: List[Hashable], sr_loss_by_record
+        input_data: pd.DataFrame,
+        idx_anomalies: List[Hashable],
+        sr_loss_by_record: pd.Series,
     ) -> Optional[pd.DataFrame]:
         input_data = input_data.copy()
         input_data["loss"] = sr_loss_by_record
         df_anomalies = input_data.loc[idx_anomalies].copy()
         if not df_anomalies.empty:
             df_anomalies.sort_values(by="loss", ascending=False, inplace=True)
-            df_anomalies.reset_index(inplace=True)
-            df_anomalies.rename(columns={"index": "index"}, inplace=True)
+            df_anomalies.reset_index(inplace=True, drop=True)
             df_anomalies.rename_axis(index="loss_rank", inplace=True)
             df_anomalies = df_anomalies.loc[
                 :, ["loss"] + [col for col in df_anomalies.columns if col != "loss"]
@@ -615,6 +624,19 @@ class TransactionAnomalyDetector:
             return input_data.index.tolist()
         elif type(input_data) == pd.DataFrame:
             return input_data.columns.tolist()
+
+    @staticmethod
+    def _handle_duplicate_index(
+        input_data: Union[pd.Series, pd.DataFrame]
+    ) -> Union[pd.Series, pd.DataFrame]:
+        if type(input_data) == pd.DataFrame:
+            input_data = input_data.copy()
+            if input_data.index.duplicated(keep="first").any():
+                input_data.reset_index(inplace=True, drop=False)
+                input_data.rename(columns={"index": "original_index"}, inplace=True)
+            else:
+                input_data["original_index"] = cls._extract_index(input_data=input_data)
+        return input_data
 
     @staticmethod
     def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[Hashable]:
