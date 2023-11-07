@@ -59,6 +59,14 @@ class TextEncoder:
 
     def get_n_params(self) -> int:
         return self._bert_encoder.get_n_params()
+
+    def encode(self, input_text: Union[str, List[str]]) -> torch.tensor:
+        return self._encode(
+            input_text=input_text,
+            tokenizer=self._tokenizer,
+            bert_encoder=self._bert_encoder,
+        )
+
     def complete(
         self,
         ls_tokens: Union[str, List[Optional[str]]],
@@ -70,6 +78,23 @@ class TextEncoder:
             bert_encoder=self._bert_encoder,
             argmax_logits=argmax_logits,
         )
+
+    @classmethod
+    @torch.no_grad()
+    def _encode(
+        cls,
+        input_text: Union[str, List[str]],
+        tokenizer: Tokenizer,
+        bert_encoder: BERTEncoder,
+    ) -> torch.tensor:
+        t_encoded_tokens = cls._prepare_t_input(
+            input_text=input_text, max_len=bert_encoder.max_len, tokenizer=tokenizer
+        )
+        # t_encoded_tokens shape: (B, T)
+        t_bert_encoding, _, _ = bert_encoder(t_encoded_tokens=t_encoded_tokens)
+        # t_bert_encoding shape: (B, T, d_model)
+        return t_bert_encoding
+
     @classmethod
     @torch.no_grad()
     def _complete(
