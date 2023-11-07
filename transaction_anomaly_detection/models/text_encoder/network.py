@@ -58,3 +58,30 @@ class BERTEncoder(nn.Module):
 
     def get_n_params(self) -> int:
         return sum(p.numel() for p in self.parameters())
+
+    def forward(
+        self,
+        t_encoded_tokens: torch.tensor,  # t_encoded_tokens shape: (B, T)
+        t_targets: Optional[torch.tensor] = None,  # t_targets shape: (B, T)
+        t_mask: Optional[torch.tensor] = None,  # t_mask shape: (B, T)
+        loss_reduction: Optional[str] = None,
+    ) -> Tuple[torch.tensor, torch.tensor, Optional[torch.tensor]]:
+        t_embedded_tokens = self._embedding(
+            t_encoded_tokens
+        )  # t_embedded_tokens shape: (B, T, d_model)
+        t_bert_encoding = self._transformer_encoder.forward(
+            t_embedded_tokens
+        )  # t_bert_encoding shape: (B, T, d_model)
+        t_logits = self._t_encoded_to_logits(
+            t_bert_encoding
+        )  # t_logits shape: (B, T, n_tokens)
+        t_loss = None
+        if t_targets is not None and t_mask is not None:
+            t_loss = self._loss(
+                t_logits=t_logits,
+                t_targets=t_targets,
+                t_mask=t_mask,
+                reduction=loss_reduction,
+            )
+            # t_loss shape: ()
+        return t_bert_encoding, t_logits, t_loss
