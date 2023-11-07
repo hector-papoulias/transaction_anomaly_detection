@@ -59,3 +59,43 @@ class TextEncoder:
 
     def get_n_params(self) -> int:
         return self._bert_encoder.get_n_params()
+    @classmethod
+    def _prepare_t_input(
+        cls, input_text: Union[List[str], str], max_len: int, tokenizer: Tokenizer
+    ) -> torch.tensor:
+        if type(input_text) == str:
+            input_text = [input_text]
+        ls_t_examples = []
+        for i, str_example in enumerate(input_text):
+            t_example = cls._str_to_tensor(
+                str_input=str_example, max_len=max_len, tokenizer=tokenizer
+            )
+            ls_t_examples.append(t_example)
+        t_encoded_tokens = torch.stack(ls_t_examples)
+        return t_encoded_tokens  # t_encoded_tokens shape: (B,T)
+
+    @classmethod
+    def _str_to_tensor(
+        cls, str_input: str, max_len: int, tokenizer: Tokenizer
+    ) -> torch.tensor:
+        ls_tokens = tokenizer.str_to_ls_tokens(str_input=str_input)
+        t_encoded_tokens = cls._ls_tokens_to_tensor(
+            ls_tokens=ls_tokens, max_len=max_len, tokenizer=tokenizer
+        )
+        return t_encoded_tokens  # t_encoded_tokens shape: (T)
+
+    @staticmethod
+    def _ls_tokens_to_tensor(
+        ls_tokens: List[str], max_len: int, tokenizer: Tokenizer
+    ) -> torch.tensor:
+        ls_tokens = tokenizer.pad(sequence=ls_tokens, pad_left=1)
+        sz_example = len(ls_tokens)
+        if sz_example > max_len:
+            ls_tokens = ls_tokens[:max_len]
+        if sz_example < max_len:
+            ls_tokens = tokenizer.pad(
+                sequence=ls_tokens, pad_right=max_len - sz_example
+            )
+        ls_encoded_tokens = tokenizer.encode(token_or_ls_tokens=ls_tokens)
+        t_encoded_tokens = torch.tensor(ls_encoded_tokens)
+        return t_encoded_tokens  # t_encoded_tokens shape: (T)
