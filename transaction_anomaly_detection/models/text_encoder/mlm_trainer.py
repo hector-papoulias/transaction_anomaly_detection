@@ -21,6 +21,141 @@ class MLMBatch:
 
 class MLMTrainer(Trainer):
     @classmethod
+    def train(
+        cls,
+        mlm_random_resample_low: int,
+        mlm_random_resample_high: int,
+        mlm_mask_token_encoding: int,
+        bert_encoder: BERTEncoder,
+        t_dataset: torch.tensor,
+        val_ratio: float,
+        sz_batch: int,
+        learning_rate: float,
+        patience: int,
+        loss_delta_threshold: float,
+        max_n_epochs: Optional[Union[int, float]] = np.nan,
+        verbose: Optional[bool] = False,
+    ) -> Tuple[BERTEncoder, Dict[str, pd.Series]]:
+        dict_loss_evolution_train = {}
+        dict_loss_evolution_val = {}
+        optimizer = torch.optim.Adam(
+            params=list(bert_encoder.parameters()), lr=learning_rate
+        )
+        early_stopper = StandardStopper(
+            patience=patience,
+            delta_threshold=loss_delta_threshold,
+            max_n_epochs=max_n_epochs,
+        )
+        bert_encoder.train()
+        progress_bar = tqdm(total=1, desc="Training")
+        while not early_stopper.stop:
+            # Split, Shufle, Batch
+            t_dataset_shuffled = cls.shuffle_dataset(t_dataset=t_dataset)
+            t_dataset_train, t_dataset_val = cls.split_dataset(
+                t_dataset=t_dataset, val_ratio=val_ratio
+            )
+            n_batches = cls.get_n_batches(
+                n_records=len(t_dataset_train), sz_batch=sz_batch
+            )
+            gen_t_batches = cls.get_batch_generator(
+                t_dataset=t_dataset_train, n_batches=n_batches, sz_batch=sz_batch
+            )
+            # Initialize Epoch Loss Records
+            epoch_train_loss = 0
+            if early_stopper.n_epochs_ellapsed == 0:
+                epoch_val_loss = np.nan
+            # Reset Progress Bar
+            progress_bar.reset()
+            progress_bar.total = n_batches
+            progress_bar_desc = cls.get_progress_bar_desc(
+                current_epoch=early_stopper.n_epochs_ellapsed,
+                previous_epoch_val_loss=epoch_val_loss,
+                min_loss=early_stopper.best_metric,
+                best_epoch=early_stopper.best_epoch,
+            )
+            progress_bar.set_description(desc=progress_bar_desc)
+            # Process Batches
+            for t_batch in gen_t_batches:
+                mlm_batch = cls._produce_mlm_batch(
+                    t_encoded_tokens=t_batch,
+                    random_resample_low=mlm_random_resample_low,
+                    random_resample_high=mlm_random_resample_high,
+                    mask_token_encoding=mlm_mask_token_encoding,
+                )
+                epoch_train_loss += cls._training_step(
+                    bert_encoder=bert_encoder, optimizer=optimizer, mlm_batch=mlm_batch
+                )
+                progress_bar.update(1)
+            # Track Loss Evolution
+            epoch_train_loss = epoch_train_loss / n_batches
+            val_data_mlm = cls._produce_mlm_batch(
+                t_encoded_tokens=t_dataset_val,
+                random_resample_low=mlm_random_resample_low,
+                random_resample_high=mlm_random_resample_high,
+                mask_token_encoding=mlm_mask_token_encoding,
+            )
+            epoch_val_loss = cls._compute_val_loss(
+                bert_encoder=bert_encoder, val_data_mlm=val_data_mlm
+            )
+
+            dict_loss_evolution_train[
+                f"Epoch {early_stopper.n_epochs_ellapsed}"
+            ] = epoch_train_loss
+            dict_loss_evolution_val[
+                f"Epoch {early_stopper.n_epochs_ellapsed}"
+            ] = epoch_val_loss
+            if verbose:
+                loss_evolution_update = cls.get_loss_evolution_update(
+                    epoch=early_stopper.n_epochs_ellapsed,
+                    train_loss=epoch_val_loss,
+                    val_loss=epoch_val_loss,
+                )
+                print(loss_evolution_update)
+            early_stopper.update(metric=epoch_val_loss, model=bert_encoder)
+        # Terminate Progress Bar
+        progress_bar.close()
+        # Select Best Model
+        bert_encoder = early_stopper.best_model
+        bert_encoder.eval()
+        train_recap = cls.get_train_recap(
+            best_epoch=early_stopper.best_epoch, min_val_loss=early_stopper.best_metric
+        )
+        dict_loss_evolution = {
+            "train": pd.Series(dict_loss_evolution_train),
+            "val": pd.Series(dict_loss_evolution_val),
+        }
+        print(train_recap)
+        return bert_encoder, dict_loss_evolution
+
+    @staticmethod
+    def _training_step(
+        bert_encoder: BERTEncoder,
+        optimizer: torch.optim.Optimizer,
+        mlm_batch: MLMBatch,
+    ) -> torch.tensor:
+        optimizer.zero_grad()
+        _, _, t_loss = bert_encoder.forward(
+            t_encoded_tokens=mlm_batch.tokens,
+            t_targets=mlm_batch.targets,
+            t_mask=mlm_batch.mask,
+            loss_reduction="mean",
+        )
+        t_loss.backward()
+        optimizer.step()
+        return t_loss.item()
+
+    @staticmethod
+    @torch.no_grad()
+    def _compute_val_loss(bert_encoder: BERTEncoder, val_data_mlm: MLMBatch) -> float:
+        _, _, t_val_loss = bert_encoder.forward(
+            t_encoded_tokens=val_data_mlm.tokens,
+            t_targets=val_data_mlm.targets,
+            t_mask=val_data_mlm.mask,
+            loss_reduction="mean",
+        )
+        return t_val_loss.item()
+
+    @classmethod
     def _produce_mlm_batch(
         cls,
         t_encoded_tokens: torch.tensor,  # Shape (B, T)
