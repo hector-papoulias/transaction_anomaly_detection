@@ -68,6 +68,9 @@ class TransactionAnomalyDetector:
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
 
+    def get_n_params(self) -> int:
+        return self._autoencoder.get_n_params()
+
     def fit(
         self,
         df_dataset: pd.DataFrame,
