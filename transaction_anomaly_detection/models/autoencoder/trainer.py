@@ -3,13 +3,14 @@ from typing import Dict, Tuple, Generator, Union, Optional
 import numpy as np
 import pandas as pd
 import torch
-from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
-from transaction_anomaly_detection.models.tools.early_stopping.standard import (
+from transaction_anomaly_detection.models.tools.training.trainer import Trainer
+from transaction_anomaly_detection.models.tools.training.early_stopping.standard import (
     StandardStopper,
 )
+from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
 
 
-class AutoencoderTrainer:
+class AutoencoderTrainer(Trainer):
     @classmethod
     def train(
         cls,
@@ -37,14 +38,14 @@ class AutoencoderTrainer:
         progress_bar = tqdm(total=1, desc="Training")
         while not early_stopper.stop:
             # Split, Shufle, Batch
-            t_dataset_shuffled = cls._shuffle_dataset(t_dataset=t_dataset)
-            t_dataset_train, t_dataset_val = cls._split_dataset(
+            t_dataset_shuffled = cls.shuffle_dataset(t_dataset=t_dataset)
+            t_dataset_train, t_dataset_val = cls.split_dataset(
                 t_dataset=t_dataset, val_ratio=val_ratio
             )
-            n_batches = cls._get_n_batches(
+            n_batches = cls.get_n_batches(
                 n_records=len(t_dataset_train), sz_batch=sz_batch
             )
-            gen_t_batches = cls._get_batch_generator(
+            gen_t_batches = cls.get_batch_generator(
                 t_dataset=t_dataset_train, n_batches=n_batches, sz_batch=sz_batch
             )
             # Initialize Epoch Loss Records
@@ -54,7 +55,7 @@ class AutoencoderTrainer:
             # Reset Progress Bar
             progress_bar.reset()
             progress_bar.total = n_batches
-            progress_bar_desc = cls._get_progress_bar_desc(
+            progress_bar_desc = cls.get_progress_bar_desc(
                 current_epoch=early_stopper.n_epochs_ellapsed,
                 previous_epoch_val_loss=epoch_val_loss,
                 min_loss=early_stopper.best_metric,
@@ -80,7 +81,7 @@ class AutoencoderTrainer:
                 f"Epoch {early_stopper.n_epochs_ellapsed}"
             ] = epoch_val_loss
             if verbose:
-                loss_evolution_update = cls._get_loss_evolution_update(
+                loss_evolution_update = cls.get_loss_evolution_update(
                     epoch=early_stopper.n_epochs_ellapsed,
                     train_loss=epoch_val_loss,
                     val_loss=epoch_val_loss,
@@ -92,7 +93,7 @@ class AutoencoderTrainer:
         # Select Best Model
         autoencoder = early_stopper.best_model
         autoencoder.eval()
-        train_recap = cls._get_train_recap(
+        train_recap = cls.get_train_recap(
             best_epoch=early_stopper.best_epoch, min_val_loss=early_stopper.best_metric
         )
         dict_loss_evolution = {
@@ -125,63 +126,3 @@ class AutoencoderTrainer:
             t_in=t_dataset_val, compute_loss=True, loss_batch_reduction="mean"
         )
         return t_val_loss.item()
-
-    @staticmethod
-    def _get_progress_bar_desc(
-        current_epoch: int,
-        previous_epoch_val_loss: float,
-        min_loss: float,
-        best_epoch: int,
-    ) -> str:
-        progress_bar_desc = f"Current Epoch: {current_epoch}." + "\t"
-        progress_bar_desc += (
-            f"Previous Epoch Val Loss: {previous_epoch_val_loss}." + "\t"
-        )
-        progress_bar_desc += f"Min Val Loss: {min_loss} @ Epoch {best_epoch}."
-        return progress_bar_desc
-
-    @staticmethod
-    def _get_loss_evolution_update(
-        epoch: int, train_loss: float, val_loss: float
-    ) -> str:
-        return f"Epoch {epoch}: train_loss = {train_loss}, val loss: {val_loss}"
-
-    @staticmethod
-    def _get_train_recap(best_epoch: int, min_val_loss: float) -> str:
-        return f"Min Val Loss @Epoch {best_epoch}: {min_val_loss} "
-
-    @staticmethod
-    @torch.no_grad()
-    def _get_batch_generator(
-        t_dataset: torch.tensor,  # t_dataset shape: (n_records, n_cat_feautres + n_con_eatures)
-        n_batches: int,
-        sz_batch: int,
-        random_seed: Optional[int] = None,
-    ) -> Generator[torch.tensor, None, None]:
-        for i in range(n_batches):
-            start_idx = i * sz_batch
-            end_idx = (i + 1) * sz_batch
-            t_batch = t_dataset[start_idx:end_idx, :]
-            yield t_batch  # t_batch shape: (B, n_cat_feautres + n_con_eatures)
-
-    @staticmethod
-    @torch.no_grad()
-    def _shuffle_dataset(t_dataset: torch.tensor) -> torch.tensor:
-        shuffled_indices = torch.randperm(t_dataset.size(0))
-        return t_dataset[shuffled_indices]
-
-    @staticmethod
-    @torch.no_grad()
-    def _split_dataset(
-        t_dataset: torch.tensor,
-        val_ratio: float,
-    ) -> Tuple[torch.tensor, torch.tensor]:
-        n_records = t_dataset.size(0)
-        split_size = int(val_ratio * n_records)
-        t_dataset_train = t_dataset[split_size:]
-        t_dataset_val = t_dataset[:split_size]
-        return t_dataset_train, t_dataset_val
-
-    @staticmethod
-    def _get_n_batches(n_records: int, sz_batch: int) -> int:
-        return (n_records + sz_batch - 1) // sz_batch
