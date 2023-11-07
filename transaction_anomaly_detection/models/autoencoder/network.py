@@ -134,6 +134,9 @@ class Autoencoder(nn.Module):
     def df_con_stats(self) -> Optional[pd.DataFrame]:
         return self._df_con_stats
 
+    def get_n_params(self) -> int:
+        return sum(p.numel() for p in self.parameters())
+
     def fit_continuous_feature_statistics(
         self,
         df_dataset: pd.DataFrame,

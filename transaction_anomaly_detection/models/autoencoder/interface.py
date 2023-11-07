@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from transaction_anomaly_detection.models.tools.tokenizer import Tokenizer
+from transaction_anomaly_detection.models.tools.tokenization.tokenizer import Tokenizer
 from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
 from transaction_anomaly_detection.models.autoencoder.trainer import AutoencoderTrainer
 
@@ -67,6 +67,9 @@ class TransactionAnomalyDetector:
     @property
     def reconstruction_loss_threshold(self) -> float:
         return self._reconstruction_loss_threshold
+
+    def get_n_params(self) -> int:
+        return self._autoencoder.get_n_params()
 
     def fit(
         self,
