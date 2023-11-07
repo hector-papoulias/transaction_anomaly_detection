@@ -59,6 +59,45 @@ class TextEncoder:
 
     def get_n_params(self) -> int:
         return self._bert_encoder.get_n_params()
+    def complete(
+        self,
+        ls_tokens: Union[str, List[Optional[str]]],
+        argmax_logits: Optional[bool] = True,
+    ) -> List[str]:
+        return self._complete(
+            ls_tokens=ls_tokens,
+            tokenizer=self._tokenizer,
+            bert_encoder=self._bert_encoder,
+            argmax_logits=argmax_logits,
+        )
+    @classmethod
+    @torch.no_grad()
+    def _complete(
+        cls,
+        ls_tokens: Union[str, List[Optional[str]]],
+        tokenizer: Tokenizer,
+        bert_encoder: BERTEncoder,
+        argmax_logits: bool,
+    ) -> List[str]:
+        ls_tokens = cls._replace_gaps_with_mask_token(
+            ls_tokens=ls_tokens, mask_token=tokenizer.mask_token
+        )
+        t_encoded_tokens = cls._ls_tokens_to_tensor(
+            ls_tokens=ls_tokens, max_len=bert_encoder.max_len, tokenizer=tokenizer
+        ).unsqueeze(
+            0
+        )  # Shape: (1, T)
+        _, t_logits, _ = bert_encoder(t_encoded_tokens=t_encoded_tokens)
+        if argmax_logits:
+            t_completions = torch.argmax(t_logits, dim=-1)
+        else:
+            categorical_distn = dist.Categorical(logits=t_logits)
+            t_completions = categorical_distn.sample()
+        t_mask = t_encoded_tokens == tokenizer.mask_token_encoding
+        t_tokens_completed = t_encoded_tokens * ~t_mask + t_completions * t_mask
+        ls_tokens_completed = t_tokens_completed.squeeze(0).tolist()
+        return tokenizer.decode(ls_tokens_completed)
+
     @classmethod
     def _prepare_t_input(
         cls, input_text: Union[List[str], str], max_len: int, tokenizer: Tokenizer
@@ -99,3 +138,15 @@ class TextEncoder:
         ls_encoded_tokens = tokenizer.encode(token_or_ls_tokens=ls_tokens)
         t_encoded_tokens = torch.tensor(ls_encoded_tokens)
         return t_encoded_tokens  # t_encoded_tokens shape: (T)
+
+    @staticmethod
+    def _replace_gaps_with_mask_token(
+        ls_tokens: List[Optional[str]], mask_token: str
+    ) -> List[str]:
+        ls_tokens_filled = []
+        for token in ls_tokens:
+            if token is not None:
+                ls_tokens_filled.append(token)
+            else:
+                ls_tokens_filled.append(mask_token)
+        return ls_tokens_filled
