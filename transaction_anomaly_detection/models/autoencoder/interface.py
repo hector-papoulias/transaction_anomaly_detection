@@ -17,7 +17,15 @@ class TransactionAnomalyDetector:
         ae_activation: nn.Module,
         dropout_rate: Optional[float] = 0,
         batchswap_noise_rate: Optional[float] = 0,
+        dict_cat_feature_to_ls_categories_n_embd: Optional[
+            Dict[str, Tuple[List[str], int]]
+        ] = None,
+        ls_con_features: Optional[List[str]] = None,
     ):
+        if dict_cat_feature_to_ls_categories_n_embd is None:
+            dict_cat_feature_to_ls_categories_n_embd = {}
+        if ls_con_features is None:
+            ls_con_features = []
         self._autoencoder = Autoencoder(
             dict_cat_feature_to_ls_categories_n_embd=dict_cat_feature_to_ls_categories_n_embd,
             ls_con_features=ls_con_features,
