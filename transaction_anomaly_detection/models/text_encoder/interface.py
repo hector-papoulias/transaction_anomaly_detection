@@ -60,6 +60,38 @@ class TextEncoder:
     def get_n_params(self) -> int:
         return self._bert_encoder.get_n_params()
 
+    def fit(
+        self,
+        corpus: List[str],
+        val_ratio: float,
+        sz_batch: int,
+        learning_rate: float,
+        patience: int,
+        loss_delta_threshold: float,
+        max_n_epochs: Optional[Union[int, float]] = np.nan,
+        verbose: Optional[bool] = False,
+    ) -> Dict[str, pd.Series]:
+        t_dataset = self._prepare_t_input(
+            input_text=corpus,
+            max_len=self._bert_encoder.max_len,
+            tokenizer=self._tokenizer,
+        )
+        self._bert_encoder, dict_loss_evolution = MLMTrainer.train(
+            mlm_random_resample_low=min(self._tokenizer.regular_token_encodings),
+            mlm_random_resample_high=1 + max(self._tokenizer.regular_token_encodings),
+            mlm_mask_token_encoding=self._tokenizer.mask_token_encoding,
+            bert_encoder=self._bert_encoder,
+            t_dataset=t_dataset,
+            val_ratio=val_ratio,
+            sz_batch=sz_batch,
+            learning_rate=learning_rate,
+            patience=patience,
+            loss_delta_threshold=loss_delta_threshold,
+            max_n_epochs=max_n_epochs,
+            verbose=verbose,
+        )
+        return dict_loss_evolution
+
     def encode(self, input_text: Union[str, List[str]]) -> torch.tensor:
         return self._encode(
             input_text=input_text,
