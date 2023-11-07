@@ -1,7 +1,7 @@
 from typing import List, Tuple, Union, Optional
 import numpy as np
 from torch.nn import Module
-from transaction_anomaly_detection.models.tools.early_stopping.base import (
+from transaction_anomaly_detection.models.tools.training.early_stopping.base import (
     EarlyStopperBase,
 )
 
