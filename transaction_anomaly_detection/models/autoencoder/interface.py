@@ -428,6 +428,19 @@ class TransactionAnomalyDetector:
             sr_loss_by_record[sr_loss_by_record > reconstruction_loss_threshold].index
         )
 
+    @classmethod
+    def _handle_duplicate_index(
+        cls, input_data: Union[pd.Series, pd.DataFrame]
+    ) -> Union[pd.Series, pd.DataFrame]:
+        if type(input_data) == pd.DataFrame:
+            input_data = input_data.copy()
+            if input_data.index.duplicated(keep="first").any():
+                input_data.reset_index(inplace=True, drop=False)
+                input_data.rename(columns={"index": "original_index"}, inplace=True)
+            else:
+                input_data["original_index"] = cls._extract_index(input_data=input_data)
+        return input_data
+
     @staticmethod
     def _format_df_reconstructions(
         ls_index_original: List[Hashable],
@@ -624,19 +637,6 @@ class TransactionAnomalyDetector:
             return input_data.index.tolist()
         elif type(input_data) == pd.DataFrame:
             return input_data.columns.tolist()
-
-    @staticmethod
-    def _handle_duplicate_index(
-        input_data: Union[pd.Series, pd.DataFrame]
-    ) -> Union[pd.Series, pd.DataFrame]:
-        if type(input_data) == pd.DataFrame:
-            input_data = input_data.copy()
-            if input_data.index.duplicated(keep="first").any():
-                input_data.reset_index(inplace=True, drop=False)
-                input_data.rename(columns={"index": "original_index"}, inplace=True)
-            else:
-                input_data["original_index"] = cls._extract_index(input_data=input_data)
-        return input_data
 
     @staticmethod
     def _extract_index(input_data: Union[pd.Series, pd.DataFrame]) -> List[Hashable]:
