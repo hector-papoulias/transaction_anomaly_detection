@@ -1,6 +1,6 @@
 from enum import Enum
 from shapely.geometry import Point
-from transaction_anomaly_detection.utils.distance_metrics.geospatial._metrics import (
+from transaction_anomaly_detection.utils.geospatial_distance._metrics import (
     compute_geodesic_distance,
 )
 
