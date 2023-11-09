@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Union, Optional
 from collections import defaultdict
 import numpy as np
 import pandas as pd
