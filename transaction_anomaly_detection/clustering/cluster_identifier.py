@@ -91,8 +91,8 @@ class ClusterIdentifier:
             dict_cluster_stats["n_spoofed"].append(n_spoofed)
             dict_cluster_stats["n_nonspoofed"].append(n_nonspoofed)
             dict_cluster_stats["class_balance"].append(class_balance)
-            ls_clusters.append(gdf_cluster)
         df_cluster_stats = pd.DataFrame.from_dict(dict_cluster_stats)
+        df_cluster_stats["cluster_idx"] = df_cluster_stats.index.tolist()
         df_cluster_stats = df_cluster_stats.loc[:, cls._ls_df_cluster_stats_cols]
         df_cluster_stats.sort_values(by="dist_mean", ascending=True, inplace=True)
         return df_cluster_stats, ls_clusters
