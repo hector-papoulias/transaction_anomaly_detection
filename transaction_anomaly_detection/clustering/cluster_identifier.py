@@ -7,6 +7,7 @@ from sklearn.neighbors import BallTree
 
 
 class ClusterIdentifier:
+    _spoofing_label_column_name = "label"
     _ls_df_cluster_stats_cols = [
         "dist_mean",
         "dist_std",
@@ -91,6 +92,20 @@ class ClusterIdentifier:
         df_cluster_stats["cluster_idx"] = df_cluster_stats.index
         df_cluster_stats.sort_values(by="dist_mean", ascending=True, inplace=True)
         return df_cluster_stats, ls_clusters
+
+    @staticmethod
+    def _compute_class_balance_stats(
+        gdf_cluster: gpd.GeoDataFrame, spoofing_label_column_name: str
+    ) -> Tuple[Union[int, float], Union[int, float], float]:
+        if spoofing_label_column_name in gdf_cluster.columns:
+            n_spoofed = len(gdf_cluster[gdf_cluster["label"] == 1])
+            n_nonspoofed = len(gdf_cluster[gdf_cluster["label"] == 0])
+            class_balance = n_spoofed / (n_nonspoofed + n_spoofed)
+        else:
+            n_spoofed = np.nan
+            n_nonspoofed = np.nan
+            class_balance = np.nan
+        return n_spoofed, n_nonspoofed, class_balance
 
     @classmethod
     def _get_cluster_distances_indices(
