@@ -95,6 +95,7 @@ class ClusterIdentifier:
         df_cluster_stats["cluster_idx"] = df_cluster_stats.index.tolist()
         df_cluster_stats = df_cluster_stats.loc[:, cls._ls_df_cluster_stats_cols]
         df_cluster_stats.sort_values(by="dist_mean", ascending=True, inplace=True)
+        df_cluster_stats.dropna(axis=1, inplace=True)
         return df_cluster_stats, ls_clusters
 
     @staticmethod
