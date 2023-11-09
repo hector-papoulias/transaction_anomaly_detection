@@ -9,11 +9,12 @@ from sklearn.neighbors import BallTree
 class ClusterIdentifier:
     _spoofing_label_column_name = "label"
     _ls_df_cluster_stats_cols = [
+        "cluster_idx",
         "dist_mean",
         "dist_std",
         "n_spoofed",
         "n_nonspoofed",
-        "class_balance" "cluster_idx",
+        "class_balance",
     ]
 
     def __init__(self):
@@ -89,7 +90,7 @@ class ClusterIdentifier:
             dict_cluster_stats["class_balance"].append(class_balance)
             ls_clusters.append(gdf_cluster)
         df_cluster_stats = pd.DataFrame.from_dict(dict_cluster_stats)
-        df_cluster_stats["cluster_idx"] = df_cluster_stats.index
+        df_cluster_stats = df_cluster_stats.loc[:, cls._ls_df_cluster_stats_cols]
         df_cluster_stats.sort_values(by="dist_mean", ascending=True, inplace=True)
         return df_cluster_stats, ls_clusters
 
