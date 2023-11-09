@@ -80,11 +80,8 @@ class ClusterIdentifier:
         dict_cluster_stats = defaultdict(list)
         for i in range(len(cluster_indices)):
             gdf_cluster = gdf_transactions.iloc[cluster_indices[i]]
-            n_spoofed = len(gdf_cluster[gdf_cluster["label"] == 1])
-            n_nonspoofed = len(gdf_cluster[gdf_cluster["label"] == 0])
-            class_balance = n_spoofed / (n_nonspoofed + n_spoofed)
-            dict_cluster_stats["dist_mean"].append(cluster_distances[i].mean())
-            dict_cluster_stats["dist_std"].append(cluster_distances[i].std())
+            dict_cluster_stats["dist_mean"].append(cluster_distances[i].nanmean())
+            dict_cluster_stats["dist_std"].append(cluster_distances[i].nanstd())
             dict_cluster_stats["n_spoofed"].append(n_spoofed)
             dict_cluster_stats["n_nonspoofed"].append(n_nonspoofed)
             dict_cluster_stats["class_balance"].append(class_balance)
