@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Union, Optional
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -7,12 +7,14 @@ from sklearn.neighbors import BallTree
 
 
 class ClusterIdentifier:
+    _spoofing_label_column_name = "label"
     _ls_df_cluster_stats_cols = [
+        "cluster_idx",
         "dist_mean",
         "dist_std",
         "n_spoofed",
         "n_nonspoofed",
-        "class_balance" "cluster_idx",
+        "class_balance",
     ]
 
     def __init__(self):
@@ -68,8 +70,9 @@ class ClusterIdentifier:
         )
         return df_cluster_stats, ls_clusters
 
-    @staticmethod
+    @classmethod
     def _format_cluster_output(
+        cls,
         gdf_transactions: gpd.GeoDataFrame,
         cluster_distances: np.array,
         cluster_indices: np.array,
@@ -78,19 +81,36 @@ class ClusterIdentifier:
         dict_cluster_stats = defaultdict(list)
         for i in range(len(cluster_indices)):
             gdf_cluster = gdf_transactions.iloc[cluster_indices[i]]
-            n_spoofed = len(gdf_cluster[gdf_cluster["label"] == 1])
-            n_nonspoofed = len(gdf_cluster[gdf_cluster["label"] == 0])
-            class_balance = n_spoofed / (n_nonspoofed + n_spoofed)
-            dict_cluster_stats["dist_mean"].append(cluster_distances[i].mean())
-            dict_cluster_stats["dist_std"].append(cluster_distances[i].std())
+            ls_clusters.append(gdf_cluster)
+            n_spoofed, n_nonspoofed, class_balance = cls._compute_class_balance_stats(
+                gdf_cluster=gdf_cluster,
+                spoofing_label_column_name=cls._spoofing_label_column_name,
+            )
+            dict_cluster_stats["dist_mean"].append(cluster_distances[i].nanmean())
+            dict_cluster_stats["dist_std"].append(cluster_distances[i].nanstd())
             dict_cluster_stats["n_spoofed"].append(n_spoofed)
             dict_cluster_stats["n_nonspoofed"].append(n_nonspoofed)
             dict_cluster_stats["class_balance"].append(class_balance)
-            ls_clusters.append(gdf_cluster)
         df_cluster_stats = pd.DataFrame.from_dict(dict_cluster_stats)
-        df_cluster_stats["cluster_idx"] = df_cluster_stats.index
+        df_cluster_stats["cluster_idx"] = df_cluster_stats.index.tolist()
+        df_cluster_stats = df_cluster_stats.loc[:, cls._ls_df_cluster_stats_cols]
         df_cluster_stats.sort_values(by="dist_mean", ascending=True, inplace=True)
+        df_cluster_stats.dropna(axis=1, inplace=True)
         return df_cluster_stats, ls_clusters
+
+    @staticmethod
+    def _compute_class_balance_stats(
+        gdf_cluster: gpd.GeoDataFrame, spoofing_label_column_name: str
+    ) -> Tuple[Union[int, float], Union[int, float], float]:
+        if spoofing_label_column_name in gdf_cluster.columns:
+            n_spoofed = len(gdf_cluster[gdf_cluster["label"] == 1])
+            n_nonspoofed = len(gdf_cluster[gdf_cluster["label"] == 0])
+            class_balance = n_spoofed / (n_nonspoofed + n_spoofed)
+        else:
+            n_spoofed = np.nan
+            n_nonspoofed = np.nan
+            class_balance = np.nan
+        return n_spoofed, n_nonspoofed, class_balance
 
     @classmethod
     def _get_cluster_distances_indices(
