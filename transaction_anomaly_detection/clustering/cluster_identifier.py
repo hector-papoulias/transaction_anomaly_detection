@@ -70,8 +70,9 @@ class ClusterIdentifier:
         )
         return df_cluster_stats, ls_clusters
 
-    @staticmethod
+    @classmethod
     def _format_cluster_output(
+        cls,
         gdf_transactions: gpd.GeoDataFrame,
         cluster_distances: np.array,
         cluster_indices: np.array,
@@ -80,6 +81,11 @@ class ClusterIdentifier:
         dict_cluster_stats = defaultdict(list)
         for i in range(len(cluster_indices)):
             gdf_cluster = gdf_transactions.iloc[cluster_indices[i]]
+            ls_clusters.append(gdf_cluster)
+            n_spoofed, n_nonspoofed, class_balance = cls._compute_class_balance_stats(
+                gdf_cluster=gdf_cluster,
+                spoofing_label_column_name=cls._spoofing_label_column_name,
+            )
             dict_cluster_stats["dist_mean"].append(cluster_distances[i].nanmean())
             dict_cluster_stats["dist_std"].append(cluster_distances[i].nanstd())
             dict_cluster_stats["n_spoofed"].append(n_spoofed)
