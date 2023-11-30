@@ -240,3 +240,11 @@ class TextEncoder:
             else:
                 ls_tokens_filled.append(mask_token)
         return ls_tokens_filled
+
+    @staticmethod
+    def _max_n_standard_tokens_to_max_len(max_n_standard_tokens: int) -> int:
+        return max_n_standard_tokens + 1
+
+    @staticmethod
+    def _max_len_to_max_n_standard_tokens(max_len: int) -> int:
+        return max_len - 1
