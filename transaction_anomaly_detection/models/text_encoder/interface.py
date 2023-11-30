@@ -150,6 +150,32 @@ class TextEncoder:
             path_export_dir=path_export_dir, model_name=model_name
         )
         torch.save(self._bert_encoder, path_model)
+
+    @classmethod
+    def load_exported_model(
+        cls, path_export_dir: Path, model_name: str
+    ) -> Type[TextEncoderType]:
+        path_model = cls._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        bert_encoder = torch.load(path_model)
+        kwargs = {
+            "ls_standard_tokens": bert_encoder.ls_standard_tokens,
+            "max_n_standard_tokens": cls._max_len_to_max_n_standard_tokens(
+                bert_encoder.max_len
+            ),
+            "d_model": bert_encoder.d_model,
+            "n_encoder_layers": bert_encoder.n_encoder_layers,
+            "n_parallel_heads_per_layer": bert_encoder.n_parallel_heads_per_layer,
+            "dim_feedforward": bert_encoder.dim_feedforward,
+            "activation": bert_encoder.activation,
+            "layer_norm_eps": bert_encoder.layer_norm_eps,
+            "dropout_rate": bert_encoder.dropout_rate,
+        }
+        text_encoder = cls(**kwargs)
+        text_encoder._bert_encoder = bert_encoder
+        return text_encoder
+
     @classmethod
     @torch.no_grad()
     def _encode(
