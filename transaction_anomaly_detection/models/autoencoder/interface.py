@@ -93,10 +93,6 @@ class TransactionAnomalyDetector:
         return self._autoencoder.has_con
 
     @property
-    def ls_con_features(self) -> List[str]:
-        return self._autoencoder.ls_con_features
-
-    @property
     def df_con_stats(self) -> Optional[pd.DataFrame]:
         return self._autoencoder.df_con_stats
 
@@ -239,6 +235,27 @@ class TransactionAnomalyDetector:
             path_export_dir=path_export_dir, model_name=model_name
         )
         torch.save(self._autoencoder, path_model)
+
+    @classmethod
+    def load_exported_model(
+        cls, path_export_dir: Path, model_name: str
+    ) -> Type[TransactionAnomalyDetectorType]:
+        path_model = cls._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        autoencoder = torch.load(path_model)
+        kwargs = {
+            "encoder_layer_szs": autoencoder.encoder_layer_szs,
+            "ae_activation": autoencoder.ae_activation,
+            "dropout_rate": autoencoder.dropout_rate,
+            "batchswap_noise_rate": autoencoder.batchswap_noise_rate,
+            "dict_cat_feature_to_ls_categories_n_embd": autoencoder.dict_cat_feature_to_ls_categories_n_embd,
+            "ls_con_features": autoencoder.ls_con_features,
+        }
+        transaction_anomaly_detector = cls(**kwargs)
+        transaction_anomaly_detector._autoencoder = autoencoder
+        return transaction_anomaly_detector
+
     @classmethod
     def _detect_anomalies(
         cls,
