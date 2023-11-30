@@ -1,4 +1,6 @@
-from typing import List, Tuple, Dict, Hashable, Optional, Union, Generator
+from typing import List, Tuple, Dict, Hashable, Optional, Union, Type, TypeVar
+from pathlib import Path
+import os
 import numpy as np
 import pandas as pd
 import torch
@@ -6,6 +8,10 @@ import torch.nn as nn
 from transaction_anomaly_detection.models.tools.tokenization.tokenizer import Tokenizer
 from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
 from transaction_anomaly_detection.models.autoencoder.trainer import AutoencoderTrainer
+
+TransactionAnomalyDetectorType = TypeVar(
+    "TransactionAnomalyDetectorType", bound="TransactionAnomalyDetector"
+)
 
 
 class TransactionAnomalyDetector:
