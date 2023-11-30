@@ -688,3 +688,8 @@ class TransactionAnomalyDetector:
             for cat_feature, ls_categories in dict_cat_feature_to_ls_categories.items()
         }
         return dict_cat_feature_to_tokenizer
+
+    @staticmethod
+    def _get_path_model(path_export_dir: Path, model_name: str) -> Path:
+        filename = model_name + ".pth"
+        return path_export_dir / filename
