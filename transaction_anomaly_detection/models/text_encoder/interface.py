@@ -34,9 +34,12 @@ class TextEncoder:
             mask_token="mask",
         )
         self._bert_encoder = BERTEncoder(
-            n_tokens=len(self._tokenizer.vocabulary),
+            ls_standard_tokens=ls_standard_tokens,
+            n_special_tokens=len(self._tokenizer.vocabulary) - len(ls_standard_tokens),
             pad_token_encoding=self._tokenizer.pad_token_encoding,
-            max_len=1 + max_n_standard_tokens,
+            max_len=self._max_n_standard_tokens_to_max_len(
+                max_n_standard_tokens=max_n_standard_tokens
+            ),
             d_model=d_model,
             n_encoder_layers=n_encoder_layers,
             n_parallel_heads_per_layer=n_parallel_heads_per_layer,
