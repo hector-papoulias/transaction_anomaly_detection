@@ -16,7 +16,7 @@ TextEncoderType = TypeVar("TextEncoderType", bound="TextEncoder")
 class TextEncoder:
     def __init__(
         self,
-        ls_tokens: List[str],
+        ls_standard_tokens: List[str],
         max_n_standard_tokens: int,
         d_model: int,
         n_encoder_layers: List[int],
@@ -28,7 +28,10 @@ class TextEncoder:
     ):
         self._max_n_standard_tokens = max_n_standard_tokens
         self._tokenizer = Tokenizer(
-            ls_tokens=ls_tokens, pad_token="pad", unk_token="unk", mask_token="mask"
+            ls_tokens=ls_standard_tokens,
+            pad_token="pad",
+            unk_token="unk",
+            mask_token="mask",
         )
         self._bert_encoder = BERTEncoder(
             n_tokens=len(self._tokenizer.vocabulary),
