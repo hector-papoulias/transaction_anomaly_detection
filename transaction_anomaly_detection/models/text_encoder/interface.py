@@ -248,3 +248,8 @@ class TextEncoder:
     @staticmethod
     def _max_len_to_max_n_standard_tokens(max_len: int) -> int:
         return max_len - 1
+
+    @staticmethod
+    def _get_path_model(path_export_dir: Path, model_name: str) -> Path:
+        filename = model_name + ".pth"
+        return path_export_dir / filename
