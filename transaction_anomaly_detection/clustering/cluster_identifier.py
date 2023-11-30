@@ -86,8 +86,8 @@ class ClusterIdentifier:
                 gdf_cluster=gdf_cluster,
                 spoofing_label_column_name=cls._spoofing_label_column_name,
             )
-            dict_cluster_stats["dist_mean"].append(cluster_distances[i].nanmean())
-            dict_cluster_stats["dist_std"].append(cluster_distances[i].nanstd())
+            dict_cluster_stats["dist_mean"].append(np.nanmean(cluster_distances[i]))
+            dict_cluster_stats["dist_std"].append(np.nanstd(cluster_distances[i]))
             dict_cluster_stats["n_spoofed"].append(n_spoofed)
             dict_cluster_stats["n_nonspoofed"].append(n_nonspoofed)
             dict_cluster_stats["class_balance"].append(class_balance)
