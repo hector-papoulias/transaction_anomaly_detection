@@ -51,6 +51,10 @@ class TextEncoder:
         self._bert_encoder.eval()
 
     @property
+    def vocabulary(self) -> List[str]:
+        return self._tokenizer.vocabulary
+
+    @property
     def max_n_standard_tokens(self) -> int:
         return self._max_n_standard_tokens
 
@@ -59,12 +63,32 @@ class TextEncoder:
         return self._bert_encoder.d_model
 
     @property
-    def bert_encoder_architecture(self) -> str:
-        return repr(self._bert_encoder)
+    def n_encoder_layers(self) -> List[int]:
+        return self._bert_encoder.n_encoder_layers
 
     @property
-    def vocabulary(self) -> List[str]:
-        return self._tokenizer.vocabulary
+    def n_parallel_heads_per_layer(self) -> int:
+        return self._bert_encoder.n_parallel_heads_per_layer
+
+    @property
+    def dim_feedforward(self) -> int:
+        return self._bert_encoder.dim_feedforward
+
+    @property
+    def activation(self) -> nn.Module:
+        return self._bert_encoder.activation
+
+    @property
+    def layer_norm_eps(self) -> float:
+        return self._bert_encoder.layer_norm_eps
+
+    @property
+    def dropout_rate(self) -> float:
+        return self._bert_encoder.dropout_rate
+
+    @property
+    def bert_encoder_architecture(self) -> str:
+        return repr(self._bert_encoder)
 
     def get_n_params(self) -> int:
         return self._bert_encoder.get_n_params()
