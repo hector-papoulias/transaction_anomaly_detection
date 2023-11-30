@@ -144,6 +144,12 @@ class TextEncoder:
             argmax_logits=argmax_logits,
         )
 
+    def export(self, path_export_dir: Path, model_name: str):
+        os.makedirs(path_export_dir, exist_ok=True)
+        path_model = self._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        torch.save(self._bert_encoder, path_model)
     @classmethod
     @torch.no_grad()
     def _encode(
