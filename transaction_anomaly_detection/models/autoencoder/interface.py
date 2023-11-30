@@ -44,6 +44,34 @@ class TransactionAnomalyDetector:
         )
         self._reconstruction_loss_threshold: float = np.nan
 
+    # Expose Init Prams
+    @property
+    def dict_cat_feature_to_ls_categories_n_embd(
+        self,
+    ) -> Dict[str, Tuple[List[str], int]]:
+        return self._autoencoder.dict_cat_feature_to_ls_categories_n_embd
+
+    @property
+    def ls_con_features(self) -> List[str]:
+        return self._autoencoder.ls_con_features
+
+    @property
+    def ae_activation(self) -> nn.Module:
+        return self._autoencoder.ae_activation
+
+    @property
+    def encoder_layer_szs(self) -> List[int]:
+        return self._autoencoder.encoder_layer_szs
+
+    @property
+    def dropout_rate(self) -> float:
+        return self._autoencoder.dropout_rate
+
+    @property
+    def batchswap_noise_rate(self) -> float:
+        return self._autoencoder.batchswap_noise_rate
+
+    # Expose Derived Attributes
     @property
     def has_cat(self) -> bool:
         return self._autoencoder.has_cat
