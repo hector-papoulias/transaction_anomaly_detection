@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import List, Tuple, Optional
 import torch
 import torch.nn as nn
 from transaction_anomaly_detection.models.layers.transformer_encoder import (
@@ -10,7 +10,8 @@ from transaction_anomaly_detection.models.layers.masked_loss import MaskedLCCELo
 class BERTEncoder(nn.Module):
     def __init__(
         self,
-        n_tokens: int,
+        ls_standard_tokens: List[str],
+        n_special_tokens: int,
         pad_token_encoding: int,
         max_len: int,
         d_model: int,
@@ -22,9 +23,19 @@ class BERTEncoder(nn.Module):
         dropout_rate: Optional[float] = 0,
     ):
         super().__init__()
-        self._n_tokens = n_tokens
+        # Save Init Params
+        self._ls_standard_tokens = ls_standard_tokens
         self._max_len = max_len
         self._d_model = d_model
+        self._n_encoder_layers = n_encoder_layers
+        self._n_parallel_heads_per_layer = n_parallel_heads_per_layer
+        self._dim_feedforward = dim_feedforward
+        self._activation = activation
+        self._layer_norm_eps = layer_norm_eps
+        self._dropout_rate = dropout_rate
+
+        # Save Derived Attributes
+        self._n_tokens = len(ls_standard_tokens) + n_special_tokens
         self._embedding = nn.Embedding(
             num_embeddings=self._n_tokens,
             embedding_dim=self._d_model,
@@ -38,15 +49,17 @@ class BERTEncoder(nn.Module):
             dim_feedforward=dim_feedforward,
             activation=activation,
             layer_norm_eps=layer_norm_eps,
+            dropout_rate=dropout_rate,
         )
         self._t_encoded_to_logits = nn.Linear(
             in_features=self._d_model, out_features=self._n_tokens, bias=True
         )
         self._loss = MaskedLCCELoss()
 
+    # Expose Init Params
     @property
-    def n_tokens(self) -> int:
-        return self._n_tokens
+    def ls_standard_tokens(self) -> List[str]:
+        return self._ls_standard_tokens
 
     @property
     def max_len(self) -> int:
@@ -55,6 +68,35 @@ class BERTEncoder(nn.Module):
     @property
     def d_model(self) -> int:
         return self._d_model
+
+    @property
+    def n_encoder_layers(self) -> List[int]:
+        return self._n_encoder_layers
+
+    @property
+    def n_parallel_heads_per_layer(self) -> int:
+        return self._n_parallel_heads_per_layer
+
+    @property
+    def dim_feedforward(self) -> int:
+        return self._dim_feedforward
+
+    @property
+    def activation(self) -> nn.Module:
+        return self._activation
+
+    @property
+    def layer_norm_eps(self) -> float:
+        return self._layer_norm_eps
+
+    @property
+    def dropout_rate(self) -> float:
+        return self._dropout_rate
+
+    # Expose Derived Attributes
+    @property
+    def n_tokens(self) -> int:
+        return self._n_tokens
 
     def get_n_params(self) -> int:
         return sum(p.numel() for p in self.parameters())

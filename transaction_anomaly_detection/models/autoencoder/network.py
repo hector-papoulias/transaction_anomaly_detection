@@ -29,6 +29,16 @@ class Autoencoder(nn.Module):
         batchswap_noise_rate: float,
     ):
         super().__init__()
+        # Save Init Params
+        self._dict_cat_feature_to_ls_categories_n_embd = (
+            dict_cat_feature_to_ls_categories_n_embd
+        )
+        self._ls_con_features = ls_con_features
+        self._ae_activation = ae_activation
+        self._encoder_layer_szs = encoder_layer_szs
+        self._dropout_rate = dropout_rate
+        self._batchswap_noise_rate = batchswap_noise_rate
+
         # Extract and Save Categorical Feature Specs
         self._dict_cat_feature_to_ls_categories: Dict[
             str, List[str]
@@ -52,7 +62,6 @@ class Autoencoder(nn.Module):
         n_embed_total = sum(ls_n_embd)
         self._has_cat: bool = True if self._n_categorical_features > 0 else False
         # Extract and Save Continuous Feature Specs
-        self._ls_con_features = ls_con_features
         self._n_continuous_features = len(self._ls_con_features)
         self._has_con = True if self._n_continuous_features > 0 else False
         if self._has_con:
@@ -106,6 +115,34 @@ class Autoencoder(nn.Module):
                 dropout_rate=self._dropout_rate_cat_decoder,
             )
 
+    # Expose Init Params
+    @property
+    def dict_cat_feature_to_ls_categories_n_embd(
+        self,
+    ) -> Dict[str, Tuple[List[str], int]]:
+        return self._dict_cat_feature_to_ls_categories_n_embd
+
+    @property
+    def ls_con_features(self) -> List[str]:
+        return self._ls_con_features
+
+    @property
+    def ae_activation(self) -> nn.Module:
+        return self._ae_activation
+
+    @property
+    def encoder_layer_szs(self) -> List[int]:
+        return self._encoder_layer_szs
+
+    @property
+    def dropout_rate(self) -> float:
+        return self._dropout_rate
+
+    @property
+    def batchswap_noise_rate(self) -> float:
+        return self._batchswap_noise_rate
+
+    # Expose Extracted Attributes
     @property
     def has_cat(self) -> bool:
         return self._has_cat
@@ -125,10 +162,6 @@ class Autoencoder(nn.Module):
     @property
     def has_con(self) -> bool:
         return self._has_con
-
-    @property
-    def ls_con_features(self) -> List[str]:
-        return self._ls_con_features
 
     @property
     def df_con_stats(self) -> Optional[pd.DataFrame]:

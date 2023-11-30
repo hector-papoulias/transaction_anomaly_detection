@@ -1,5 +1,6 @@
-from typing import List, Dict, Union, Optional
-from tqdm.notebook import tqdm
+from typing import List, Dict, Union, Optional, Type, TypeVar
+import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
@@ -9,11 +10,13 @@ from transaction_anomaly_detection.models.tools.tokenization.tokenizer import To
 from transaction_anomaly_detection.models.text_encoder.network import BERTEncoder
 from transaction_anomaly_detection.models.text_encoder.mlm_trainer import MLMTrainer
 
+TextEncoderType = TypeVar("TextEncoderType", bound="TextEncoder")
+
 
 class TextEncoder:
     def __init__(
         self,
-        ls_tokens: List[str],
+        ls_standard_tokens: List[str],
         max_n_standard_tokens: int,
         d_model: int,
         n_encoder_layers: List[int],
@@ -25,12 +28,18 @@ class TextEncoder:
     ):
         self._max_n_standard_tokens = max_n_standard_tokens
         self._tokenizer = Tokenizer(
-            ls_tokens=ls_tokens, pad_token="pad", unk_token="unk", mask_token="mask"
+            ls_tokens=ls_standard_tokens,
+            pad_token="pad",
+            unk_token="unk",
+            mask_token="mask",
         )
         self._bert_encoder = BERTEncoder(
-            n_tokens=len(self._tokenizer.vocabulary),
+            ls_standard_tokens=ls_standard_tokens,
+            n_special_tokens=len(self._tokenizer.vocabulary) - len(ls_standard_tokens),
             pad_token_encoding=self._tokenizer.pad_token_encoding,
-            max_len=1 + max_n_standard_tokens,
+            max_len=self._max_n_standard_tokens_to_max_len(
+                max_n_standard_tokens=max_n_standard_tokens
+            ),
             d_model=d_model,
             n_encoder_layers=n_encoder_layers,
             n_parallel_heads_per_layer=n_parallel_heads_per_layer,
@@ -42,6 +51,10 @@ class TextEncoder:
         self._bert_encoder.eval()
 
     @property
+    def vocabulary(self) -> List[str]:
+        return self._tokenizer.vocabulary
+
+    @property
     def max_n_standard_tokens(self) -> int:
         return self._max_n_standard_tokens
 
@@ -50,12 +63,32 @@ class TextEncoder:
         return self._bert_encoder.d_model
 
     @property
-    def bert_encoder_architecture(self) -> str:
-        return repr(self._bert_encoder)
+    def n_encoder_layers(self) -> List[int]:
+        return self._bert_encoder.n_encoder_layers
 
     @property
-    def vocabulary(self) -> List[str]:
-        return self._tokenizer.vocabulary
+    def n_parallel_heads_per_layer(self) -> int:
+        return self._bert_encoder.n_parallel_heads_per_layer
+
+    @property
+    def dim_feedforward(self) -> int:
+        return self._bert_encoder.dim_feedforward
+
+    @property
+    def activation(self) -> nn.Module:
+        return self._bert_encoder.activation
+
+    @property
+    def layer_norm_eps(self) -> float:
+        return self._bert_encoder.layer_norm_eps
+
+    @property
+    def dropout_rate(self) -> float:
+        return self._bert_encoder.dropout_rate
+
+    @property
+    def bert_encoder_architecture(self) -> str:
+        return repr(self._bert_encoder)
 
     def get_n_params(self) -> int:
         return self._bert_encoder.get_n_params()
@@ -110,6 +143,38 @@ class TextEncoder:
             bert_encoder=self._bert_encoder,
             argmax_logits=argmax_logits,
         )
+
+    def export(self, path_export_dir: Path, model_name: str):
+        os.makedirs(path_export_dir, exist_ok=True)
+        path_model = self._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        torch.save(self._bert_encoder, path_model)
+
+    @classmethod
+    def load_exported_model(
+        cls, path_export_dir: Path, model_name: str
+    ) -> Type[TextEncoderType]:
+        path_model = cls._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        bert_encoder = torch.load(path_model)
+        kwargs = {
+            "ls_standard_tokens": bert_encoder.ls_standard_tokens,
+            "max_n_standard_tokens": cls._max_len_to_max_n_standard_tokens(
+                bert_encoder.max_len
+            ),
+            "d_model": bert_encoder.d_model,
+            "n_encoder_layers": bert_encoder.n_encoder_layers,
+            "n_parallel_heads_per_layer": bert_encoder.n_parallel_heads_per_layer,
+            "dim_feedforward": bert_encoder.dim_feedforward,
+            "activation": bert_encoder.activation,
+            "layer_norm_eps": bert_encoder.layer_norm_eps,
+            "dropout_rate": bert_encoder.dropout_rate,
+        }
+        text_encoder = cls(**kwargs)
+        text_encoder._bert_encoder = bert_encoder
+        return text_encoder
 
     @classmethod
     @torch.no_grad()
@@ -207,3 +272,16 @@ class TextEncoder:
             else:
                 ls_tokens_filled.append(mask_token)
         return ls_tokens_filled
+
+    @staticmethod
+    def _max_n_standard_tokens_to_max_len(max_n_standard_tokens: int) -> int:
+        return max_n_standard_tokens + 1
+
+    @staticmethod
+    def _max_len_to_max_n_standard_tokens(max_len: int) -> int:
+        return max_len - 1
+
+    @staticmethod
+    def _get_path_model(path_export_dir: Path, model_name: str) -> Path:
+        filename = model_name + ".pth"
+        return path_export_dir / filename

@@ -1,4 +1,6 @@
-from typing import List, Tuple, Dict, Hashable, Optional, Union, Generator
+from typing import List, Tuple, Dict, Hashable, Optional, Union, Type, TypeVar
+from pathlib import Path
+import os
 import numpy as np
 import pandas as pd
 import torch
@@ -6,6 +8,10 @@ import torch.nn as nn
 from transaction_anomaly_detection.models.tools.tokenization.tokenizer import Tokenizer
 from transaction_anomaly_detection.models.autoencoder.network import Autoencoder
 from transaction_anomaly_detection.models.autoencoder.trainer import AutoencoderTrainer
+
+TransactionAnomalyDetectorType = TypeVar(
+    "TransactionAnomalyDetectorType", bound="TransactionAnomalyDetector"
+)
 
 
 class TransactionAnomalyDetector:
@@ -38,6 +44,34 @@ class TransactionAnomalyDetector:
         )
         self._reconstruction_loss_threshold: float = np.nan
 
+    # Expose Init Prams
+    @property
+    def dict_cat_feature_to_ls_categories_n_embd(
+        self,
+    ) -> Dict[str, Tuple[List[str], int]]:
+        return self._autoencoder.dict_cat_feature_to_ls_categories_n_embd
+
+    @property
+    def ls_con_features(self) -> List[str]:
+        return self._autoencoder.ls_con_features
+
+    @property
+    def ae_activation(self) -> nn.Module:
+        return self._autoencoder.ae_activation
+
+    @property
+    def encoder_layer_szs(self) -> List[int]:
+        return self._autoencoder.encoder_layer_szs
+
+    @property
+    def dropout_rate(self) -> float:
+        return self._autoencoder.dropout_rate
+
+    @property
+    def batchswap_noise_rate(self) -> float:
+        return self._autoencoder.batchswap_noise_rate
+
+    # Expose Derived Attributes
     @property
     def has_cat(self) -> bool:
         return self._autoencoder.has_cat
@@ -57,10 +91,6 @@ class TransactionAnomalyDetector:
     @property
     def has_con(self) -> bool:
         return self._autoencoder.has_con
-
-    @property
-    def ls_con_features(self) -> List[str]:
-        return self._autoencoder.ls_con_features
 
     @property
     def df_con_stats(self) -> Optional[pd.DataFrame]:
@@ -198,6 +228,33 @@ class TransactionAnomalyDetector:
             dict_cat_feature_to_tokenizer=self._dict_cat_feature_to_tokenizer,
             average_over_features=average_over_features,
         )
+
+    def export(self, path_export_dir: Path, model_name: str):
+        os.makedirs(path_export_dir, exist_ok=True)
+        path_model = self._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        torch.save(self._autoencoder, path_model)
+
+    @classmethod
+    def load_exported_model(
+        cls, path_export_dir: Path, model_name: str
+    ) -> Type[TransactionAnomalyDetectorType]:
+        path_model = cls._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        autoencoder = torch.load(path_model)
+        kwargs = {
+            "encoder_layer_szs": autoencoder.encoder_layer_szs,
+            "ae_activation": autoencoder.ae_activation,
+            "dropout_rate": autoencoder.dropout_rate,
+            "batchswap_noise_rate": autoencoder.batchswap_noise_rate,
+            "dict_cat_feature_to_ls_categories_n_embd": autoencoder.dict_cat_feature_to_ls_categories_n_embd,
+            "ls_con_features": autoencoder.ls_con_features,
+        }
+        transaction_anomaly_detector = cls(**kwargs)
+        transaction_anomaly_detector._autoencoder = autoencoder
+        return transaction_anomaly_detector
 
     @classmethod
     def _detect_anomalies(
@@ -654,3 +711,8 @@ class TransactionAnomalyDetector:
             for cat_feature, ls_categories in dict_cat_feature_to_ls_categories.items()
         }
         return dict_cat_feature_to_tokenizer
+
+    @staticmethod
+    def _get_path_model(path_export_dir: Path, model_name: str) -> Path:
+        filename = model_name + ".pth"
+        return path_export_dir / filename
