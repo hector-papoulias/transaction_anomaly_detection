@@ -1,5 +1,6 @@
-from typing import List, Dict, Union, Optional
-from tqdm.notebook import tqdm
+from typing import List, Dict, Union, Optional, Type, TypeVar
+import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
@@ -8,6 +9,8 @@ import torch.distributions as dist
 from transaction_anomaly_detection.models.tools.tokenization.tokenizer import Tokenizer
 from transaction_anomaly_detection.models.text_encoder.network import BERTEncoder
 from transaction_anomaly_detection.models.text_encoder.mlm_trainer import MLMTrainer
+
+TextEncoderType = TypeVar("TextEncoderType", bound="TextEncoder")
 
 
 class TextEncoder:
