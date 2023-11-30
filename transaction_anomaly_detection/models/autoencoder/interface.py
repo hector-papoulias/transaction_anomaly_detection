@@ -233,6 +233,12 @@ class TransactionAnomalyDetector:
             average_over_features=average_over_features,
         )
 
+    def export(self, path_export_dir: Path, model_name: str):
+        os.makedirs(path_export_dir, exist_ok=True)
+        path_model = self._get_path_model(
+            path_export_dir=path_export_dir, model_name=model_name
+        )
+        torch.save(self._autoencoder, path_model)
     @classmethod
     def _detect_anomalies(
         cls,
