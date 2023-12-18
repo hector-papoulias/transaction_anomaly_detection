@@ -52,13 +52,13 @@ class MLMTrainer(Trainer):
             # Split, Shufle, Batch
             t_dataset_shuffled = cls.shuffle_dataset(t_dataset=t_dataset)
             t_dataset_train, t_dataset_val = cls.split_dataset(
-                t_dataset=t_dataset, val_ratio=val_ratio
+                t_dataset=t_dataset_shuffled, val_ratio=val_ratio
             )
             n_batches = cls.get_n_batches(
                 n_records=len(t_dataset_train), sz_batch=sz_batch
             )
             gen_t_batches = cls.get_batch_generator(
-                t_dataset=t_dataset_train, n_batches=n_batches, sz_batch=sz_batch
+                t_dataset=t_dataset_train, sz_batch=sz_batch
             )
             # Initialize Epoch Loss Records
             epoch_train_loss = 0

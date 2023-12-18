@@ -39,14 +39,14 @@ class Trainer(ABC):
     def get_train_recap(best_epoch: int, min_val_loss: float) -> str:
         return f"Min Val Loss @Epoch {best_epoch}: {min_val_loss} "
 
-    @staticmethod
+    @classmethod
     @torch.no_grad()
     def get_batch_generator(
+        cls,
         t_dataset: torch.tensor,  # t_dataset shape: (n_records, n_cat_feautres + n_con_eatures)
-        n_batches: int,
         sz_batch: int,
-        random_seed: Optional[int] = None,
     ) -> Generator[torch.tensor, None, None]:
+        n_batches = cls.get_n_batches(n_records=t_dataset.size(0), sz_batch=sz_batch)
         for i in range(n_batches):
             start_idx = i * sz_batch
             end_idx = (i + 1) * sz_batch

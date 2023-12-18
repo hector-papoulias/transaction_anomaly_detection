@@ -135,13 +135,12 @@ class TextEncoder:
     def complete(
         self,
         ls_tokens: Union[str, List[Optional[str]]],
-        argmax_logits: Optional[bool] = True,
     ) -> List[str]:
         return self._complete(
             ls_tokens=ls_tokens,
             tokenizer=self._tokenizer,
             bert_encoder=self._bert_encoder,
-            argmax_logits=argmax_logits,
+            argmax_logits=True,
         )
 
     def export(self, path_export_dir: Path, model_name: str):
