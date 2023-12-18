@@ -1,3 +1,4 @@
+from typing import Optional
 import torch
 import torch.nn as nn
 
@@ -24,7 +25,9 @@ class ContinuousFeatureNormalizer(nn.Module):
     def stds(self, t_stds: torch.tensor):
         self._stds = nn.Parameter(t_stds, requires_grad=False)
 
-    def forward(self, x: torch.tensor, denormalize: bool = False) -> torch.tensor:
+    def forward(
+        self, x: torch.tensor, denormalize: Optional[bool] = False
+    ) -> torch.tensor:
         if denormalize:
             return self._stds * x + self._means
         return (x - self._means) / self._stds
