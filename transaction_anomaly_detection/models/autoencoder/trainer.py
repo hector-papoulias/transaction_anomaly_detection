@@ -40,7 +40,7 @@ class AutoencoderTrainer(Trainer):
             # Split, Shufle, Batch
             t_dataset_shuffled = cls.shuffle_dataset(t_dataset=t_dataset)
             t_dataset_train, t_dataset_val = cls.split_dataset(
-                t_dataset=t_dataset, val_ratio=val_ratio
+                t_dataset=t_dataset_shuffled, val_ratio=val_ratio
             )
             n_batches = cls.get_n_batches(
                 n_records=len(t_dataset_train), sz_batch=sz_batch
