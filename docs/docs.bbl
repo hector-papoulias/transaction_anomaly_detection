@@ -1,0 +1,54 @@
+\begin{thebibliography}{1}
+
+\bibitem{AeInterp}
+L.~Antwarg, R.~M. Miller, B.~Shapira, and L.~Rokach.
+\newblock {E}xplaining {A}nomalies {D}etected by {A}utoencoders using {S}hapley
+  {A}dditive {E}xplanations.
+\newblock {\em {E}xpert {S}ystems with {A}pplications}, 186, 2021.
+
+\bibitem{LayerNorm}
+L.~J. Ba, J.~R. Kiros, and G.~E. Hinton.
+\newblock {L}ayer {N}ormalization.
+\newblock {\em arXiv:1607.06450v1 [stat.ML]}, 2016.
+
+\bibitem{BERT}
+J.~Devlin, M-W. Chang, K.~Lee, and K.~Toutanova.
+\newblock Bert: {P}re-{T}raining of {D}eep {B}idirectional {T}ransformers for
+  {L}anguage {U}nderstanding.
+\newblock {\em NAACL-HLT}, 1:4171--4186, 2019.
+
+\bibitem{BatchNorm}
+S.~Ioffe and C.~Szegedy.
+\newblock {B}atch {N}ormalization: {A}ccelerating {D}eep {N}etwork {T}raining
+  by {R}educing {I}nternal {C}ovariate {S}hift.
+\newblock {\em ICML'15: Proceedings of the 32nd International Conference on
+  International Conference on Machine Learning}, 37:448–456, 2015.
+
+\bibitem{SHAP}
+S.~M. Lundberg and S.~Lee.
+\newblock {A} {U}nified {A}pproach to {I}nterpreting {M}odel {P}redictions.
+\newblock {\em NIPS'17: Proceedings of the 31st International Conference on
+  Neural Information Processing}, 31:4768--4777, 2017.
+
+\bibitem{ResExp}
+D.~F.~N. Oliveira, L.~F. Vismari, A.~M. Nascimento, J.~R. de~Almeida~Jr, P.~S.
+  Cugnasca, J.~B.~Camargo Jr, L.~Almeida, R.~Gripp, and M.~Neves.
+\newblock {A} {N}ew {I}nterpretable {U}nsupervised {A}nomaly {D}etection
+  {M}ethod {B}ased on {R}esidual {E}xplanation.
+\newblock {\em arXiv:2103.07953 [cs.LG]}, 2021.
+
+\bibitem{Dropout}
+N.~Srivastava, G.~Hinton, A.Krizhevsky, I.~Sutskever, and R.~Salakhutdinov.
+\newblock {D}ropout {A} {S}imple {W}ay to {P}revent {N}eural {N}etworks from
+  {O}verfitting.
+\newblock {\em {J}ournal of {M}achine {L}earning {R}eseach}, 15(56):1929--1958,
+  2014.
+
+\bibitem{AIAYN}
+A.~Vaswani, N.~Shazeer, N.~Parmar, J.~Uszkoreit, L.~Jones, A.~N. Gomez, Ł.
+  Kaiser, and I.~Polosukhin.
+\newblock {A}ttention is {A}ll {Y}ou {N}eed.
+\newblock {\em {N}eural {I}nformation {P}rocessing {S}ystems}, 30:6000--6010,
+  2017.
+
+\end{thebibliography}

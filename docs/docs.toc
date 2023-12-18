@@ -1,0 +1,102 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Introduction: Unknown Unknowns Detection}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Context \& Vision}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Hypotheses}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Objectives}{5}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Early Achievements}{6}{subsection.1.4}%
+\contentsline {section}{\numberline {2}Solution}{9}{section.2}%
+\contentsline {subsubsection}{\numberline {2.0.1}\texttt {TextEncoder}}{9}{subsubsection.2.0.1}%
+\contentsline {subsubsection}{\numberline {2.0.2}\texttt {TransactionAnomalyDetector}}{10}{subsubsection.2.0.2}%
+\contentsline {subsubsection}{\numberline {2.0.3}Anomaly Interpretation \& Signal Identification}{12}{subsubsection.2.0.3}%
+\contentsline {subsubsection}{\numberline {2.0.4}Integration: Anomaly Detection Pipeline}{12}{subsubsection.2.0.4}%
+\contentsline {section}{\numberline {3}API Reference}{15}{section.3}%
+\contentsline {subsection}{\numberline {3.1}\texttt {clustering}}{15}{subsection.3.1}%
+\contentsline {paragraph}{\numberline {3.1.0.1}Class \texttt {ClusterIdentifier}}{15}{paragraph.3.1.0.1}%
+\contentsline {subparagraph}{Method \texttt {get\_cluster()}}{15}{subparagraph*.17}%
+\contentsline {subparagraph}{Method \texttt {fit()}}{15}{subparagraph*.18}%
+\contentsline {subsection}{\numberline {3.2}\texttt {models}}{16}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}\texttt {tools}}{17}{subsubsection.3.2.1}%
+\contentsline {paragraph}{\numberline {3.2.1.1}Class \texttt {Tokenizer}}{17}{paragraph.3.2.1.1}%
+\contentsline {subparagraph}{Method \texttt {pad()}}{17}{subparagraph*.19}%
+\contentsline {subparagraph}{Method \texttt {encode()}}{18}{subparagraph*.20}%
+\contentsline {subparagraph}{Method \texttt {decode()}}{18}{subparagraph*.21}%
+\contentsline {subparagraph}{Method \texttt {str\_to\_ls\_tokens()}}{18}{subparagraph*.22}%
+\contentsline {subparagraph}{Method \texttt {ls\_tokens\_to\_str()}}{18}{subparagraph*.23}%
+\contentsline {paragraph}{\numberline {3.2.1.2}Abstract Class \texttt {EarlyStopperBase}}{18}{paragraph.3.2.1.2}%
+\contentsline {subparagraph}{Method \texttt {update()}}{19}{subparagraph*.24}%
+\contentsline {subparagraph}{Abstract Method \texttt {update\_stop\_state()}}{19}{subparagraph*.25}%
+\contentsline {subparagraph}{Abstract Class Method \texttt {stopping\_condition\_met()}}{19}{subparagraph*.26}%
+\contentsline {paragraph}{\numberline {3.2.1.3}Class \texttt {StandardStopper(EarlyStopperBase)}}{19}{paragraph.3.2.1.3}%
+\contentsline {subparagraph}{Method \texttt {update()}}{19}{subparagraph*.27}%
+\contentsline {subparagraph}{Class Method \texttt {stopping\_condition\_met()}}{20}{subparagraph*.28}%
+\contentsline {paragraph}{\numberline {3.2.1.4}Class \texttt {MonotoneStopper(EarlyStopperBase)}}{20}{paragraph.3.2.1.4}%
+\contentsline {subparagraph}{Method \texttt {update()}}{20}{subparagraph*.29}%
+\contentsline {subparagraph}{Class Method \texttt {stopping\_condition\_met()}}{20}{subparagraph*.30}%
+\contentsline {paragraph}{\numberline {3.2.1.5}Abstract Class \texttt {TrainerBase}}{21}{paragraph.3.2.1.5}%
+\contentsline {subparagraph}{Abstract Class Method \texttt {train()}}{21}{subparagraph*.31}%
+\contentsline {subparagraph}{Static Method \texttt {get\_progress\_bar\_desc()}}{21}{subparagraph*.32}%
+\contentsline {subparagraph}{Static Method \texttt {get\_loss\_evolution\_update()}}{21}{subparagraph*.33}%
+\contentsline {subparagraph}{Static Method \texttt {get\_train\_recap()}}{22}{subparagraph*.34}%
+\contentsline {subparagraph}{Class Method \texttt {get\_batch\_generator()}}{22}{subparagraph*.35}%
+\contentsline {subparagraph}{Static Method \texttt {shuffle\_dataset()}}{22}{subparagraph*.36}%
+\contentsline {subparagraph}{Static Method \texttt {split\_dataset()}}{22}{subparagraph*.37}%
+\contentsline {subparagraph}{Static Method \texttt {get\_n\_batches()}}{22}{subparagraph*.38}%
+\contentsline {subsubsection}{\numberline {3.2.2}\texttt {layers}}{22}{subsubsection.3.2.2}%
+\contentsline {paragraph}{\numberline {3.2.2.1}Class BatchSwapNoise}{23}{paragraph.3.2.2.1}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{23}{subparagraph*.39}%
+\contentsline {paragraph}{\numberline {3.2.2.2}Class ContinuousFeatureNormalizer}{23}{paragraph.3.2.2.2}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{23}{subparagraph*.40}%
+\contentsline {paragraph}{\numberline {3.2.2.3}Class \texttt {LinBnDrop}}{23}{paragraph.3.2.2.3}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{24}{subparagraph*.41}%
+\contentsline {paragraph}{\numberline {3.2.2.4}Class \texttt {MaskedCCELoss}}{24}{paragraph.3.2.2.4}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{24}{subparagraph*.42}%
+\contentsline {paragraph}{\numberline {3.2.2.5}Class \texttt {ReconstructionLoss}}{24}{paragraph.3.2.2.5}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{24}{subparagraph*.43}%
+\contentsline {paragraph}{\numberline {3.2.2.6}Class \texttt {ShiftedSigmoid}}{25}{paragraph.3.2.2.6}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{25}{subparagraph*.44}%
+\contentsline {paragraph}{\numberline {3.2.2.7}Class \texttt {TransformerEncoder}}{25}{paragraph.3.2.2.7}%
+\contentsline {subparagraph}{Method \texttt {forward()}}{26}{subparagraph*.45}%
+\contentsline {subsubsection}{\numberline {3.2.3}Text Encoder}{26}{subsubsection.3.2.3}%
+\contentsline {paragraph}{\numberline {3.2.3.1}Class \texttt {TextEncoder}}{26}{paragraph.3.2.3.1}%
+\contentsline {subparagraph}{Method \texttt {get\_n\_params()}}{27}{subparagraph*.46}%
+\contentsline {subparagraph}{Method \texttt {fit()}}{27}{subparagraph*.47}%
+\contentsline {subparagraph}{Method \texttt {encode()}}{27}{subparagraph*.48}%
+\contentsline {subparagraph}{Method \texttt {complete()}}{28}{subparagraph*.49}%
+\contentsline {subparagraph}{Method \texttt {export()}}{28}{subparagraph*.50}%
+\contentsline {subparagraph}{Method \texttt {load\_exported\_model()}}{28}{subparagraph*.51}%
+\contentsline {subsubsection}{\numberline {3.2.4}Autoencoder}{28}{subsubsection.3.2.4}%
+\contentsline {paragraph}{\numberline {3.2.4.1}Class \texttt {TransactionAnomalyDetector}}{28}{paragraph.3.2.4.1}%
+\contentsline {subparagraph}{Method \texttt {get\_n\_params()}}{29}{subparagraph*.52}%
+\contentsline {subparagraph}{Method \texttt {fit()}}{29}{subparagraph*.53}%
+\contentsline {subparagraph}{Method \texttt {fit\_reconstruction\_loss\_threshold()}}{30}{subparagraph*.54}%
+\contentsline {subparagraph}{Method \texttt {detect\_anomalies()}}{30}{subparagraph*.55}%
+\contentsline {subparagraph}{Method \texttt {reconstruct()}}{30}{subparagraph*.56}%
+\contentsline {subparagraph}{Method \texttt {encode()}}{30}{subparagraph*.57}%
+\contentsline {subparagraph}{Method \texttt {compute\_mean\_reconstruction\_loss()}}{30}{subparagraph*.58}%
+\contentsline {subparagraph}{Method \texttt {compute\_reconstruction\_loss\_by\_feature()}}{30}{subparagraph*.59}%
+\contentsline {subparagraph}{Method \texttt {compute\_reconstruction\_loss\_by\_record()}}{31}{subparagraph*.60}%
+\contentsline {subparagraph}{Method \texttt {export()}}{31}{subparagraph*.61}%
+\contentsline {subparagraph}{Method \texttt {load\_exported\_model()}}{31}{subparagraph*.62}%
+\contentsline {section}{\numberline {4}Process Specifications}{31}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Hyperparameters: Meaning \& Selection Guidelines}{31}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}\texttt {TextEncoder}}{31}{subsubsection.4.1.1}%
+\contentsline {paragraph}{\numberline {4.1.1.1}\texttt {ls\_standard\_tokens}}{32}{paragraph.4.1.1.1}%
+\contentsline {paragraph}{\numberline {4.1.1.2}\texttt {max\_n\_standard\_tokens}}{32}{paragraph.4.1.1.2}%
+\contentsline {paragraph}{\numberline {4.1.1.3}\texttt {d\_model, n\_parallel\_heads\_per\_layer and dim\_feedforward}}{32}{paragraph.4.1.1.3}%
+\contentsline {paragraph}{\numberline {4.1.1.4}\texttt {n\_encoder\_layers}}{33}{paragraph.4.1.1.4}%
+\contentsline {paragraph}{\numberline {4.1.1.5}\texttt {activation}}{33}{paragraph.4.1.1.5}%
+\contentsline {paragraph}{\numberline {4.1.1.6}\texttt {layer\_norm\_eps}}{33}{paragraph.4.1.1.6}%
+\contentsline {paragraph}{\numberline {4.1.1.7}\texttt {dropout\_rate}}{33}{paragraph.4.1.1.7}%
+\contentsline {subsubsection}{\numberline {4.1.2}\texttt {TransactionAnomalyDetector}}{33}{subsubsection.4.1.2}%
+\contentsline {paragraph}{\numberline {4.1.2.1}Input Feature Specifiers}{33}{paragraph.4.1.2.1}%
+\contentsline {paragraph}{\numberline {4.1.2.2}\texttt {ls\_encoder\_layer\_szs}}{34}{paragraph.4.1.2.2}%
+\contentsline {paragraph}{\numberline {4.1.2.3}\texttt {ae\_activation}}{34}{paragraph.4.1.2.3}%
+\contentsline {paragraph}{\numberline {4.1.2.4}\texttt {dropout\_rate}}{35}{paragraph.4.1.2.4}%
+\contentsline {paragraph}{\numberline {4.1.2.5}\texttt {batchswap\_noise\_rate}}{35}{paragraph.4.1.2.5}%
+\contentsline {subsection}{\numberline {4.2}Geospatial Segmentation}{35}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}SoFi Daily Job}{36}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}High-Level View: Runner}{36}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Tasks}{36}{subsubsection.4.3.2}%
+\contentsline {subsubsection}{\numberline {4.3.3}Jobs}{37}{subsubsection.4.3.3}%
+\contentsline {subsubsection}{\numberline {4.3.4}Configuration}{37}{subsubsection.4.3.4}%
+\contentsline {section}{\numberline {5}Directions for Future Research}{40}{section.5}%
