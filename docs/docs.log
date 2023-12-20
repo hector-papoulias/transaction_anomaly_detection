@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.5) (preloaded format=pdflatex 2023.5.13)  18 DEC 2023 22:44
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.5) (preloaded format=pdflatex 2023.5.13)  20 DEC 2023 16:06
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -2123,15 +2123,15 @@ Package rerunfilecheck Info: File `docs.out' has not changed.
 (rerunfilecheck)             Checksum: 64857449E7F1486D3DE42510D5EC9D0A;9432.
  ) 
 Here is how much of TeX's memory you used:
- 40783 strings out of 476360
- 927949 string characters out of 5782833
+ 40782 strings out of 476360
+ 927922 string characters out of 5782833
  1993993 words of memory out of 5000000
- 59967 multiletter control sequences out of 15000+600000
+ 59966 multiletter control sequences out of 15000+600000
  588836 words of font info for 91 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  98i,12n,117p,1256b,1380s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx9.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi7.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr5.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr9.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy7.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt8.pfb><C:/Users/hector.papoulias/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on docs.pdf (41 pages, 2585601 bytes).
+Output written on docs.pdf (41 pages, 2584927 bytes).
 PDF statistics:
  1121 PDF objects out of 1200 (max. 8388607)
  481 named destinations out of 1000 (max. 500000)

@@ -507,13 +507,13 @@ The classes provided are:
 
     cluster_identifier = ClusterIdentifier()
 
-    # Train it on a gdf (gdf_local_transactions) containing a collection of geolocation transactions. Center the clusters at transactions carrying positive pseudolabels.
+    # Train it on a gdf (gdf_transactions) containing a collection of geolocation transactions. Center the clusters at transactions carrying positive pseudolabels.
 
     cluster_identifier.fit(
         gdf_transactions=gdf_transactions,
         n_nbrs=100,
         crs='EPSG:4326',
-        gdf_centers=gdf_local_transactions[gdf_local_transactions['label'] == 1]
+        gdf_centers=gdf_transactions[gdf_transactions['label'] == 1]
         )
 
     # Display the identified clusters so as to decide which cluster to work with.
